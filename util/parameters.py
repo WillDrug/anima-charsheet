@@ -1,6 +1,7 @@
 from weakref import WeakSet
 from .exceptions import NotEnoughData, NotFound, OverLimit, FollowTheRules
 from .resources import Resource
+from math import floor
 import traceback
 
 class ModuleConfig:
@@ -19,7 +20,7 @@ class ModuleConfig:
 
 class Attribute:
     STARTING_VALUE = 0
-    VALUE_LIMIT = -1
+    COST_LIMIT = -1
 
     def __init__(self):
         self.previous_value = self.STARTING_VALUE
@@ -35,7 +36,7 @@ class Attribute:
         def bonus_append(calling_attribute):
             # todo: check if this works well
             if traceback.format_stack().__len__() > set(traceback.format_stack()).__len__():
-                return 0
+                return 0  # todo logging with warning
             return self.value
         return self.__name__, bonus_append
 
@@ -47,7 +48,7 @@ class Attribute:
 
     @property
     def value(self):
-        return self.base_value+sum([q.value for q in self.boosts])+sum([self.bonuses[q](self) for q in self.bonuses])
+        return self.base_value+floor(sum([q.value for q in self.boosts]))+floor(sum([self.bonuses[q](self) for q in self.bonuses]))
 
     @property
     def modifier(self):
@@ -62,20 +63,24 @@ class Attribute:
         self.previous_value = self.STARTING_VALUE
 
     def change_base_value(self, value):
-        if not self.check_limit(self.base_value+value):
-            raise OverLimit(f'{self.__class__} value can\'t be over {self.VALUE_LIMIT}')
+        if value < 0:
+            raise OverLimit(f'Don\'t go making negatives unless overridden, lol')
         self.previous_value = self.base_value
         self.base_value = value
+        if not self.check_limit():
+            self.rollback_base_value()
+            raise OverLimit(f'{self.__class__} cost can\'t be over {self.COST_LIMIT}')
 
-    def check_limit(self, value):
-        if self.VALUE_LIMIT == -1:
+    def check_limit(self):
+        if self.COST_LIMIT == -1:
             return True
         else:
-            return value <= self.VALUE_LIMIT
+            return self.cost <= self.COST_LIMIT
 
 
 class MultipartAttribute(Attribute):
     INSTANCE_LIST = {}
+    SUM_COST_LIMIT = -1
 
     @classmethod
     def __new__(cls, caller, attr_name, container, *args, **kwargs):
@@ -106,8 +111,19 @@ class MultipartAttribute(Attribute):
     def __init__(self, attr_name, container):
         super().__init__()
 
+    def check_global_limit(self):
+        if self.SUM_COST_LIMIT > -1:
+            return self.full_cost() <= self.SUM_COST_LIMIT
+        else:
+            return True
+
     def change_base_value(self, value):
-        if not self.check_limit(value):
-            raise OverLimit(f'{self.__class__} value can\'t be over {self.VALUE_LIMIT}')
         self.previous_value = self.base_value
         self.base_value = value
+
+        if not self.check_limit(value):
+            self.rollback_base_value()
+            raise OverLimit(f'{self.__class__} cost can\'t be over {self.COST_LIMIT}}')
+        if not self.check_global_limit():
+            self.rollback_base_value()
+            raise OverLimit(f'{super().__class__} total cost can\'t be over {self.SUM_COST_LIMIT}')

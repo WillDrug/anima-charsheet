@@ -1,7 +1,7 @@
 from util.exceptions import NotFound, NotEnoughData, Panik, OverLimit
 from util.resources import CreationPointTracker, CreationPoint, Resource
 from util.parameters import ModuleConfig, Attribute, MultipartAttribute
-from math import floor
+from math import floor, inf
 import traceback
 
 class GeneralConfig(ModuleConfig):
@@ -12,7 +12,7 @@ class GeneralConfig(ModuleConfig):
         super(GeneralConfig, self).__init__()
 
 class Stat(MultipartAttribute):
-    VALUE_LIMIT = 10
+    COST_LIMIT = 10
     SUM_COST_LIMIT = 65
     INSTANCE_LIST = {}  # important!
     STARTING_VALUE = 5
@@ -34,7 +34,7 @@ class Stat(MultipartAttribute):
 
         self.boosts.append(res)
 
-    def bonus(self):
+    def mod_bonus(self):
         def bonus_append(calling_attribute):
             if traceback.format_stack().__len__() > set(traceback.format_stack()).__len__():
                 return 0
@@ -50,11 +50,121 @@ class DEX(Stat):
 class AGI(Stat):
     pass
 
+class CON(Stat):
+   def health_bonus(self):
+       def bonus_append(calling_attribute):
+           if traceback.format_stack().__len__() > set(traceback.format_stack()).__len__():
+               return 0
+           return 20+10*self.value+self.modifier
+       return self.__name__, bonus_append
+
 class LifePoints(Attribute):
-    pass
+    def __init__(self, LPM_cost):
+        self.LPM_cost = LPM_cost  # this can be and is used by bonuses
+        super().__init__()
+    #  LifePoints take no resources in and should be unboostable. Leaving the method open nonetheless.
 
 class Initiative(Attribute):
     STARTING_VALUE = 20
+
+class Weight(Attribute):
+    STARTING_VALUE = 0
+
+    def kg(self):
+        """
+        :return: light and heavy load by something
+        """
+        if self.value == 1:
+            return 1, 1
+        elif self.value == 2:
+            return 5, 10
+        elif self.value == 3:
+            return 10, 20
+        elif self.value == 4:
+            return 15, 40
+        elif self.value == 5:
+            return 25, 60
+        elif self.value == 6:
+            return 40, 120
+        elif self.value == 7:
+            return 60, 180
+        elif self.value == 8:
+            return 80, 260
+        elif self.value == 9:
+            return 100, 350
+        elif self.value == 10:
+            return 150, 420
+        elif self.value == 11:
+            return 200, 600
+        elif self.value == 12:
+            return 350, 1000
+        elif self.value == 13:
+            return 1000, 3000
+        elif self.value == 14:
+            return 5000, 25000
+        elif self.value == 15:
+            return 15000, 100000
+        elif self.value == 16:
+            return 100000, 500000
+        elif self.value == 17:
+            return 500000, 2500000
+        elif self.value == 18:
+            return 1000000, 10000000
+        elif self.value == 19:
+            return 10000000, 150000000
+        elif self.value >= 20:
+            return inf, inf
+        else:
+            raise NotFound('This bs does not work with your values')
+
+
+class Movement(Attribute):
+    STARTING_VALUE = 0
+
+    def meters(self):  # fixme this is some rpg bullshit right there
+        if self.value == 1:
+            return 1
+        elif self.value == 2:
+            return 4
+        elif self.value == 3:
+            return 8
+        elif self.value == 4:
+            return 15
+        elif self.value == 5:
+            return 20
+        elif self.value == 6:
+            return 22
+        elif self.value == 7:
+            return 25
+        elif self.value == 8:
+            return 28
+        elif self.value == 9:
+            return 32
+        elif self.value == 10:
+            return 35
+        elif self.value == 11:
+            return 40
+        elif self.value == 12:
+            return 50
+        elif self.value == 13:
+            return 80
+        elif self.value == 14:
+            return 150
+        elif self.value == 15:
+            return 250
+        elif self.value == 16:
+            return 500
+        elif self.value == 17:
+            return 1000
+        elif self.value == 18:
+            return 5000
+        elif self.value == 19:
+            return 25000
+        elif self.value >= 20:
+            return inf
+        else:
+            raise NotFound('This bs does not work with your values')
+
 
 class General:
     def get_class_lp(self):
@@ -64,15 +174,19 @@ class General:
 
     def __init__(self, config: GeneralConfig):
         self.config = config
-        self.stats = {k: Stat(k, self) for k in Stat.impl_list()}
-        self.maximum_life_points = LifePoints()
+        self.stats = {k: Stat(k, self) for k in Stat.impl_list()}  # fixme: possibly change to clear set attributes
+        self.maximum_life_points = LifePoints(self.config.LPM_cost)
         self.maximum_life_points.add_bonus(self.config.__class__, lambda x: self.level*self.config.LP_per_level)
-
+        self.maximum_life_points.add_bonus(self.stats.get('CON').health_bonus())
         self.initiative = Initiative()
         self.initiative.add_bonus(self.config.__class__, lambda x: self.level*self.config.init_per_level)
-        self.initiative.add_bonus(self.stats.get('dex').bonus())  # todo: think about this
-        self.initiative.add_bonus(self.stats.get('agi').bonus())
+        self.initiative.add_bonus(self.stats.get('DEX').mod_bonus())  # todo: think about this
+        self.initiative.add_bonus(self.stats.get('AGI').mod_bonus())
         self.cp_tracker = CreationPointTracker(CreationPoint)
+        self.movement = Movement()
+        self.movement.add_bonus(self.stats.get('AGI').bonus())
+        self.weight = Weight()
+        self.weight.add_bonus(self.stats.get('STR').bonus())
 
     @property
     def stat_costs(self):
@@ -84,14 +198,23 @@ class General:
                 raise NotFound(f'{k} is not a stat')
         try:
             for k in stats:
-                self.stats[k].change_base_value(stats[k])
-        except OverLimit as e:
-            for k in stats:
-                self.stats[k].rollback_base_value()
-            raise e
+                aff = []
+                try:
+                    self.stats[k].change_base_value(stats[k])
+                    aff.append(k)
+                except OverLimit as e:
+                    for k in aff:
+                        self.stats[k].rollback_base_value()
+                    raise e  # reraise because I'm a shithead
+
     @property
     def level(self) -> int:
         return floor(self.config.get_dp()/100)
+
+    @property
+    def presence(self):
+        return self.level*5
+
 
     def boost_stat(self, stat_name, res: Resource):
         stat = self.stats.get(stat_name)
