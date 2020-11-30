@@ -19,20 +19,38 @@ class ModuleConfig:
 
 
 class Attribute:
+    VALUE_CAP = None
+
+    def get_value_cap(self):  # overridable to be a function
+        return self.VALUE_CAP
+
+    COST_CAP = None
+    def get_cost_cap(self):  # overridable to be a function
+        return self.COST_CAP  # this expects to have a base resource
+
     STARTING_VALUE = 0
     COST_LIMIT = -1
 
-    def __init__(self):
-        self.previous_value = self.STARTING_VALUE
+    def __init__(self, base: Resource):
         self.base_value = self.STARTING_VALUE  # base value is 5, which will immediately detract from given points to spend
+        self.base_resource = base
         self.boosts = []
         self.bonuses = {}
 
     @property
     def cost(self):
-        return self.base_value
+        """
+        By default the cost property uses base_resource to calculate the actual cost. For the resource cost *IS* value
+        It's the value prop of the Attribute which applies the cost for buying.
+        :return: Attribut
+        """
+        return sum([q for q in self.boosts if isinstance(q, self.base_resource)])
 
     def bonus(self):
+        """
+        Append a function to value calculation of another attribute
+        :return: Returns a function to use based on this attribute parm.
+        """
         def bonus_append(calling_attribute):
             # todo: check if this works well
             if traceback.format_stack().__len__() > set(traceback.format_stack()).__len__():
@@ -41,9 +59,20 @@ class Attribute:
         return self.__name__, bonus_append
 
     def rem_bonus(self, n):
+        """
+        Remove
+        :param n: Name of bonus origin
+        :return:
+        """
         del self.bonuses[n]
 
     def add_bonus(self, n, f):
+        """
+        Adds personal bonus
+        :param n: Name of caller to delete later
+        :param f: Function of bonus
+        :return:
+        """
         self.bonuses[n] = f
 
     @property
