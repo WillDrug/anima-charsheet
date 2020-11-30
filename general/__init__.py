@@ -1,6 +1,7 @@
 from util.exceptions import NotFound, NotEnoughData, Panik, OverLimit
-from util.resources import CreationPointTracker, CreationPoint, Resource
+from util.resources import CreationPointTracker, CreationPoint, Resource, ResourceTracker
 from util.parameters import ModuleConfig, Attribute, MultipartAttribute
+from .resources import Willpower, Fatigue
 from math import floor, inf
 import traceback
 
@@ -58,17 +59,31 @@ class CON(Stat):
            return 20+10*self.value+self.modifier
        return self.__name__, bonus_append
 
+class INT(Stat):
+    pass
+
+class POW(Stat):
+    pass
+
+class WIL(Stat):
+    pass
+
+class PER(Stat):
+    pass
+
 class LifePoints(Attribute):
     def __init__(self, LPM_cost):
         self.LPM_cost = LPM_cost  # this can be and is used by bonuses
         super().__init__()
     #  LifePoints take no resources in and should be unboostable. Leaving the method open nonetheless.
 
-class Initiative(Attribute):
+class Initiative(Attribute):  # fixme: separation of boint-buy and resource boosts are kinda dumb
     STARTING_VALUE = 20
+    COST_LIMIT = 20  # cannot be updated by itself
 
 class Weight(Attribute):
     STARTING_VALUE = 0
+    COST_LIMIT = 0  # cannot be updated by itself
 
     def kg(self):
         """
@@ -187,6 +202,8 @@ class General:
         self.movement.add_bonus(self.stats.get('AGI').bonus())
         self.weight = Weight()
         self.weight.add_bonus(self.stats.get('STR').bonus())
+        self.fatigue_tracker = ResourceTracker(Fatigue, limit_f=lambda: self.stats.get('CON').value)
+        self.willpower_tracker = ResourceTracker(Willpower, limit_f=lambda: self.stats.get('WIL').value)
 
     @property
     def stat_costs(self):
