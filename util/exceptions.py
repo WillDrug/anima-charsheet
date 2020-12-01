@@ -6,6 +6,9 @@ class RuleError(Exception):
 class CodeError(Exception):
     pass
 
+class CheekyHack(Exception):
+    pass
+
 class NotFound(CodeError):
     pass
 
@@ -19,4 +22,7 @@ class Panik(CodeError):
     pass
 
 class FollowTheRules(CodeError):
+    pass
+
+class MergedResource(CheekyHack):
     pass

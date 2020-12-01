@@ -1,9 +1,10 @@
-from util.exceptions import NotFound, NotEnoughData, Panik, OverLimit
+from util.exceptions import NotFound, NotEnoughData, Panik, OverLimit, MergedResource
 from util.resources import CreationPointTracker, CreationPoint, Resource, ResourceTracker
 from util.parameters import ModuleConfig, Attribute, MultipartAttribute
-from .resources import Willpower, Fatigue
+from .resources import Willpower, Fatigue, StatPoint
 from math import floor, inf
 import traceback
+
 
 class GeneralConfig(ModuleConfig):
     def __init__(self, LPM_cost, init_per_level, life_points_per_level):
@@ -12,64 +13,117 @@ class GeneralConfig(ModuleConfig):
         self.LP_per_level = life_points_per_level
         super(GeneralConfig, self).__init__()
 
+
 class Stat(MultipartAttribute):
-    COST_LIMIT = 10
-    SUM_COST_LIMIT = 65
     INSTANCE_LIST = {}  # important!
-    STARTING_VALUE = 5
+    # 11 physical 13 mental WOW MENTAL
+    DEFAULT_VALUE_CAP = 10  # fixme
+    DEFAULT_BASE_RESOURCE_CAP = 11
+    DEFAULT_SUM_BASE_RESOURCE_CAP = 65  # this is redundant
+    BASE_RESOURCE = StatPoint
+    PHYSICAL = True
+
+    def get_value_cap(self):
+        return self.DEFAULT_VALUE_CAP + (1 if self.PHYSICAL else 3)
 
     # todo: limit inhuman\zen to appropriate caps depending on mental\physical
     @property
     def cost(self):
-        return self.value + (self.value-9 if self.value >= 10 else 0)
+        return self.value + (self.value - 9 if self.value >= 10 else 0)
 
     @property
     def modifier(self):
-        return (self.value-5)*5 if self.value >= 5 else -10*(5-self.value)  # kill me
+        return (self.value - 5) * 5 if self.value >= 5 else -10 * (5 - self.value)  # kill me
 
-    def boost(self, res: Resource):  # todo change to function
+    def __stat_point_value(self):
+        """
+        This silly function is because point buy is WEEEEIRD
+        :return:
+        """
+        return sum(
+            [
+                q['boost'].value if q['boost'].value < 10 else floor(9 + ((q['boost'].value - 9) / 2))
+                for q in self.boosts if isinstance(q['boost'], StatPoint)
+            ]
+        )
+
+    @property
+    def value(self):
+        return min(self.base_value +
+                   self.__stat_point_value() +
+                   sum([
+                       floor(q['boost'].value / q['cost']) for q in self.boosts
+                       if q['limited'] and not isinstance(q['boost'], self.base_resource)
+                   ]) +
+                   sum([self.bonuses[q]['f'](self) for q in self.bonuses if self.bonuses[q]['limited']]),
+                   self.get_value_cap()) + \
+               sum([floor(q['boost'].value / q['cost']) for q in self.boosts if not q['limited']]) + \
+               sum([self.bonuses[q]['f'](self) for q in self.bonuses if not self.bonuses[q]['limited']])
+
+    def boost(self, res: Resource, cost=None,
+              limited=True):  # limited is VALUE LIMIT. COST limit always applies for base_resource
+        if isinstance(res, self.base_resource):
+            self.check_cost(res.value)
+            if any([isinstance(q, self.base_resource) for q in self.boosts]):
+                cr = [q for q in self.boosts if isinstance(q, self.base_resource)].pop()
+                cr.set_value(cr.get_value() + res.value)
+                raise MergedResource()
+            cost = self.get_base_resource_cost()  # fixme
         if isinstance(res, CreationPoint):
-            res.set_usage(f'Plus {res.value} to {self.__class__.__name__}', stat=True)
+            res.set_usage(f'Plus {res.value} to {self.__class__.__class__}', stat=True)
         else:
-            res.set_usage(f'Plus {res.value} to {self.__name__}')
-
-        self.boosts.append(res)
+            res.set_usage(f'Plus {res.value} to {self.__class__}')
+        if cost is None:
+            cost = 1
+        res.set_usage(f'Plus {res.value} to {self.__class__}')
+        self.boosts.append({'boost': res, 'limited': limited, 'cost': cost})
 
     def mod_bonus(self):
         def bonus_append(calling_attribute):
             if traceback.format_stack().__len__() > set(traceback.format_stack()).__len__():
                 return 0
             return self.modifier
-        return self.__name__, bonus_append
+
+        return self.__class__, bonus_append
+
 
 class STR(Stat):
     pass
 
+
 class DEX(Stat):
     pass
+
 
 class AGI(Stat):
     pass
 
+
 class CON(Stat):
-   def health_bonus(self):
-       def bonus_append(calling_attribute):
-           if traceback.format_stack().__len__() > set(traceback.format_stack()).__len__():
-               return 0
-           return 20+10*self.value+self.modifier
-       return self.__name__, bonus_append
+    def health_bonus(self):
+        def bonus_append(calling_attribute):
+            if traceback.format_stack().__len__() > set(traceback.format_stack()).__len__():
+                return 0
+            return 20 + 10 * self.value + self.modifier
+
+        return self.__class__, bonus_append
+
 
 class INT(Stat):
-    pass
+    PHYSICAL = False
+
 
 class POW(Stat):
-    pass
+    PHYSICAL = False
+
 
 class WIL(Stat):
-    pass
+    PHYSICAL = False
+
 
 class PER(Stat):
-    pass
+    PHYSICAL = False
+
 
 class LifePoints(Attribute):
     def __init__(self, LPM_cost):
@@ -77,13 +131,17 @@ class LifePoints(Attribute):
         super().__init__()
     #  LifePoints take no resources in and should be unboostable. Leaving the method open nonetheless.
 
+
 class Initiative(Attribute):  # fixme: separation of boint-buy and resource boosts are kinda dumb
-    STARTING_VALUE = 20
-    COST_LIMIT = 20  # cannot be updated by itself
+    BASE_VALUE = 20
+    DEFAULT_BASE_RESOURCE_CAP = 0  # can't update
+
 
 class Weight(Attribute):
-    STARTING_VALUE = 0
-    COST_LIMIT = 0  # cannot be updated by itself
+    BASE_VALUE = 0
+    DEFAULT_BASE_RESOURCE_CAP = 0  # can't update
+
+    # fixme: kf should be the *modifier* function
 
     def kg(self):
         """
@@ -134,7 +192,8 @@ class Weight(Attribute):
 
 
 class Movement(Attribute):
-    STARTING_VALUE = 0
+    BASE_VALUE = 0
+    DEFAULT_BASE_RESOURCE_CAP = 0
 
     def meters(self):  # fixme this is some rpg bullshit right there
         if self.value == 1:
@@ -184,24 +243,30 @@ class Movement(Attribute):
 class General:
     def get_class_lp(self):
         def class_lp(inst):
-            return self.level*self.config.LP_per_level
+            return self.level * self.config.LP_per_level
+
         return class_lp
 
+    def max_stat_points(self):
+        return 65
+
     def __init__(self, config: GeneralConfig):
+        self.stat_points_tracker = ResourceTracker(StatPoint, self.max_stat_points)
         self.config = config
-        self.stats = {k: Stat(k, self) for k in Stat.impl_list()}  # fixme: possibly change to clear set attributes
+        self.stats = {k: Stat(k, self, base=StatPoint) for k in
+                      Stat.impl_list()}  # fixme: possibly change to clear set attributes
         self.maximum_life_points = LifePoints(self.config.LPM_cost)
-        self.maximum_life_points.add_bonus(self.config.__class__, lambda x: self.level*self.config.LP_per_level)
-        self.maximum_life_points.add_bonus(self.stats.get('CON').health_bonus())
+        self.maximum_life_points.add_bonus(self.config.__class__, lambda x: self.level * self.config.LP_per_level)
+        self.maximum_life_points.add_bonus(*self.stats.get('CON').health_bonus())
         self.initiative = Initiative()
-        self.initiative.add_bonus(self.config.__class__, lambda x: self.level*self.config.init_per_level)
-        self.initiative.add_bonus(self.stats.get('DEX').mod_bonus())  # todo: think about this
-        self.initiative.add_bonus(self.stats.get('AGI').mod_bonus())
+        self.initiative.add_bonus(self.config.__class__, lambda x: self.level * self.config.init_per_level)
+        self.initiative.add_bonus(*self.stats.get('DEX').mod_bonus())  # todo: think about this
+        self.initiative.add_bonus(*self.stats.get('AGI').mod_bonus())
         self.cp_tracker = CreationPointTracker(CreationPoint)
         self.movement = Movement()
-        self.movement.add_bonus(self.stats.get('AGI').bonus())
+        self.movement.add_bonus(*self.stats.get('AGI').bonus())
         self.weight = Weight()
-        self.weight.add_bonus(self.stats.get('STR').bonus())
+        self.weight.add_bonus(*self.stats.get('STR').bonus())
         self.fatigue_tracker = ResourceTracker(Fatigue, limit_f=lambda: self.stats.get('CON').value)
         self.willpower_tracker = ResourceTracker(Willpower, limit_f=lambda: self.stats.get('WIL').value)
 
@@ -213,25 +278,19 @@ class General:
         for k in stats:
             if k not in Stat.impl_list():
                 raise NotFound(f'{k} is not a stat')
-        try:
-            for k in stats:
-                aff = []
-                try:
-                    self.stats[k].change_base_value(stats[k])
-                    aff.append(k)
-                except OverLimit as e:
-                    for k in aff:
-                        self.stats[k].rollback_base_value()
-                    raise e  # reraise because I'm a shithead
+            try:
+                stp = self.stat_points_tracker.emit_resource(stats[k])  # possible exception 1
+                self.stats[k].boost(stp)  # possible exception 2
+            except MergedResource:  # nonblocking exception
+                self.stat_points_tracker.free_resource(stp)
 
     @property
     def level(self) -> int:
-        return floor(self.config.get_dp()/100)
+        return floor(self.config.get_dp() / 100)
 
     @property
     def presence(self):
-        return self.level*5
-
+        return self.level * 5
 
     def boost_stat(self, stat_name, res: Resource):
         stat = self.stats.get(stat_name)
@@ -242,7 +301,6 @@ class General:
     def boost_stat_with_cp(self, stat_name, value):  # todo: catch? anything?
         cp = self.cp_tracker.emit_resource(value=value, limit=self.level)
         return self.boost_stat(stat_name, cp)
-
 
 
 if __name__ == '__main__':

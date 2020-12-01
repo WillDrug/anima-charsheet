@@ -23,7 +23,7 @@ class Resource:
 
 class ResourceTracker:
     def get_limit(self):
-        raise NotImplemented('This tracker does not support limit calculation')
+        raise NotImplementedError('This tracker does not support limit calculation')
 
     def __init__(self, resource: Resource, limit_f=None):
         self.resource_cls = resource
@@ -33,9 +33,9 @@ class ResourceTracker:
     # todo: if there are more overrides, split into distinct functions
     def emit_resource(self, value=1, limit=None, **kwargs):
         try:
-            if self.get_limit() > self.get_total()+value:
+            if self.get_total() + value > self.get_limit():
                 raise OverLimit(f'{self.resource_cls} cannot be spent over {self.get_limit()}')
-        except NotImplemented:
+        except NotImplementedError:  # fixme: move to a base CheekyHack exception
             pass
         res = self.resource_cls(value=value)
         self.track.append(res)
@@ -47,7 +47,8 @@ class ResourceTracker:
         except ValueError:
             raise NotFound(f'Resource {resource} not in use')
 
-    def update_value(self, resource, value):
+    def _update_value(self, resource, value):  # dangerous function, make attributes use it
+        # fixme: delete, just use resource's set_value from appropriate places
         try:
             idx = self.track.index(resource)
         except ValueError:

@@ -19,20 +19,40 @@ class ModuleConfig:
 
 
 class Attribute:
-    VALUE_CAP = None
+    # Any attribute in the game has
+    # Value limit affected resource injection
+        # For the main resource, there is a value cap
+        # For the non-main resources there is no cap by default
+    # Value Limit affected boosts
+        # Function boosting as usual
+    # Non-limit affected reousrce injections and boosts
+        # Free-form injection should be possible.
+    # -> limit affect becomes a by default True kwarg.
+    # -> value limit is injected on value calculation
+    # -> value limit is always got via a function (for DP dependent)
+    # -> main resource is preset in class overrides or initiative
+    # -> main resource cost cap is injected on boost function
+    # -> main resource cost cap if always gotten via a function
+    # -> everything else is free-form.
+    DEFAULT_VALUE_CAP = None
+    DEFAULT_BASE_RESOURCE_CAP = None
+    BASE_RESOURCE = Resource
 
     def get_value_cap(self):  # overridable to be a function
-        return self.VALUE_CAP
+        # THIS IS NOT A PROPERTY TO BE OVERRIDEN ESAILY
+        return self.DEFAULT_VALUE_CAP
 
-    COST_CAP = None
-    def get_cost_cap(self):  # overridable to be a function
-        return self.COST_CAP  # this expects to have a base resource
+    def get_base_resource_cap(self):  # overridable to be a function
+        return self.DEFAULT_BASE_RESOURCE_CAP  # this expects to have a base resource
 
-    STARTING_VALUE = 0
-    COST_LIMIT = -1
+    def get_base_resource_cost(self):
+        return self.DEFAULT_BASE_RESOURCE_COST
 
-    def __init__(self, base: Resource):
-        self.base_value = self.STARTING_VALUE  # base value is 5, which will immediately detract from given points to spend
+    BASE_VALUE = 0  # not necessary, but a useful variable for like "base 20 initiative"
+    DEFAULT_BASE_RESOURCE_COST = None
+
+    def __init__(self, base: Resource = Resource):
+        self.base_value = self.BASE_VALUE
         self.base_resource = base
         self.boosts = []
         self.bonuses = {}
@@ -44,7 +64,7 @@ class Attribute:
         It's the value prop of the Attribute which applies the cost for buying.
         :return: Attribut
         """
-        return sum([q for q in self.boosts if isinstance(q, self.base_resource)])
+        return sum([q.value for q in self.boosts if isinstance(q, self.base_resource)])
 
     def bonus(self):
         """
@@ -56,7 +76,7 @@ class Attribute:
             if traceback.format_stack().__len__() > set(traceback.format_stack()).__len__():
                 return 0  # todo logging with warning
             return self.value
-        return self.__name__, bonus_append
+        return self.__class__, bonus_append
 
     def rem_bonus(self, n):
         """
@@ -66,50 +86,49 @@ class Attribute:
         """
         del self.bonuses[n]
 
-    def add_bonus(self, n, f):
+    def add_bonus(self, n, f, limited=True):
         """
         Adds personal bonus
         :param n: Name of caller to delete later
         :param f: Function of bonus
         :return:
         """
-        self.bonuses[n] = f
+        self.bonuses[n] = {'f': f, 'limited': limited}
 
     @property
     def value(self):
-        return self.base_value+floor(sum([q.value for q in self.boosts]))+floor(sum([self.bonuses[q](self) for q in self.bonuses]))
+        limited = self.base_value+sum([floor(q['boost'].value/q['cost']) for q in self.boosts if q['limited']]) + \
+                  sum([self.bonuses[q]['f'](self) for q in self.bonuses if self.bonuses[q]['limited']])
+        if self.get_value_cap() is not None:
+            limited = min(limited, self.get_value_cap())
+        return limited + \
+               sum([floor(q['boost'].value/q['cost']) for q in self.boosts if not q['limited']]) + \
+               sum([self.bonuses[q]['f'](self) for q in self.bonuses if not self.bonuses[q]['limited']])
 
     @property
-    def modifier(self):
+    def modifier(self):  # free use, not affected much
         return 0
 
-    def boost(self, res: Resource):
+    def check_cost(self, update_value):
+        cap = self.get_base_resource_cap()
+        if cap is not None:
+            if self.cost + update_value > cap:
+                raise OverLimit(f'{self.__class__} cost can\'t go over {cap}.')
+
+
+    def boost(self, res: Resource, cost=None, limited=True):  # limited is VALUE LIMIT. COST limit always applies for base_resource
+        if isinstance(res, self.base_resource):
+            self.check_cost(res.value)
+            cost = self.get_base_resource_cost()  # fixme
+        if cost is None:
+            cost = 1
         res.set_usage(f'Plus {res.value} to {self.__name__}')
-        self.boosts.append(res)
-
-    def rollback_base_value(self):
-        self.base_value = self.previous_value
-        self.previous_value = self.STARTING_VALUE
-
-    def change_base_value(self, value):
-        if value < 0:
-            raise OverLimit(f'Don\'t go making negatives unless overridden, lol')
-        self.previous_value = self.base_value
-        self.base_value = value
-        if not self.check_limit():
-            self.rollback_base_value()
-            raise OverLimit(f'{self.__class__} cost can\'t be over {self.COST_LIMIT}')
-
-    def check_limit(self):
-        if self.COST_LIMIT == -1:
-            return True
-        else:
-            return self.cost <= self.COST_LIMIT
+        self.boosts.append({'boost': res, 'limited': limited, 'cost': cost})
 
 
 class MultipartAttribute(Attribute):
     INSTANCE_LIST = {}
-    SUM_COST_LIMIT = -1
+    DEFAULT_SUM_BASE_RESOURCE_CAP = None
 
     @classmethod
     def __new__(cls, caller, attr_name, container, *args, **kwargs):
@@ -134,25 +153,19 @@ class MultipartAttribute(Attribute):
     def cls_full_cost(cls, container):
         return sum([inst.cost for inst in cls.INSTANCE_LIST.get(container, [])])
 
-    def full_cost(self, container):
-        return sum([inst.cost for inst in self.INSTANCE_LIST.get(container, [])])
+    @property
+    def full_cost(self):
+        return sum([inst.cost for inst in self.INSTANCE_LIST.get(self.container, [])])
 
-    def __init__(self, attr_name, container):
-        super().__init__()
+    def get_sum_base_resource_cap(self):
+        return self.DEFAULT_SUM_BASE_RESOURCE_CAP
 
-    def check_global_limit(self):
-        if self.SUM_COST_LIMIT > -1:
-            return self.full_cost() <= self.SUM_COST_LIMIT
-        else:
-            return True
+    def __init__(self, attr_name, container, base: Resource): # repeated to correctyl pass attributes on
+        self.container = container
+        super().__init__(base)
 
-    def change_base_value(self, value):
-        self.previous_value = self.base_value
-        self.base_value = value
-
-        if not self.check_limit(value):
-            self.rollback_base_value()
-            raise OverLimit(f'{self.__class__} cost can\'t be over {self.COST_LIMIT}}')
-        if not self.check_global_limit():
-            self.rollback_base_value()
-            raise OverLimit(f'{super().__class__} total cost can\'t be over {self.SUM_COST_LIMIT}')
+    def check_cost(self, update_value):
+        if self.get_sum_base_resource_cap() is not None:
+            if self.full_cost+update_value > self.get_sum_base_resource_cap():
+                raise OverLimit(f'Costs for {super().__class__} cannot go over {self.get_sum_base_resource_cap()}')
+        super().check_cost(update_value)
