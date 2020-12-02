@@ -34,15 +34,12 @@ class Character:
     CONTROL = 1
     BIND = 1
     BANISH = 1
-    ATTACK = False  # todo: fix this and calculate weird Tao exception
-    BLOCK = False
-    DODGE = False
     SECONDARY = {}  # fixme: class skill bonuses need to be tighter
     # / PER LEVEL
-    general_config = GeneralConfig(1, 1, 1)
-    combat_config = CombatConfig(1, 1, 1, 1, 1)
-    magic_config = MagicConfig(1, 1, 1, 1, 1, 1, 1, 1)
-    psychic_config = PsychicConfig(1, 1, 1)
+    general_config = GeneralConfig(1, 1, 1)  # fixme: I want to somehow pass functions to get levels and shit right from here
+    combat_config = CombatConfig(1, 1, 1, 1, False, False, False, dp_limit=0.6)
+    magic_config = MagicConfig(1, 1, 1, 1, 1, 1, 1, dp_limit=0.6)
+    psychic_config = PsychicConfig(1, 1, dp_limit=0.6)
     secondary_config = SecondaryConfig({})
     TERTIARY = 1
 
@@ -58,6 +55,9 @@ class Character:
         self.general_config.set_dpf(self.get_dp)
         self.general_config.set_gnosis_f(self.get_gnosis)
         self.general = General(self.general_config)
+        self.combat_config.set_dpf(self.get_dp)
+        self.general_config.set_gnosis_f(self.get_gnosis)
+        self.combat = Combat(self.combat_config)
 
 
 class Warrior(Character):

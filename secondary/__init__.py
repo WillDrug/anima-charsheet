@@ -1,11 +1,13 @@
 from util.exceptions import NotFound
+from util.parameters import ModuleConfig
 
-class SecondaryConfig:
-    def __init__(self, skills: dict):
+class SecondaryConfig(ModuleConfig):
+    def __init__(self, skills: dict, **kwargs):
         for k in skills:
             if k not in Skill.impl_list():
                 raise NotFound(f'{k} is not a valid seconary ability')
         self.skills = skills
+        super().__init__(**kwargs)
 
 class Skill:
     @classmethod

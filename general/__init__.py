@@ -7,11 +7,11 @@ import traceback
 
 
 class GeneralConfig(ModuleConfig):
-    def __init__(self, LPM_cost, init_per_level, life_points_per_level):
+    def __init__(self, LPM_cost, init_per_level, life_points_per_level, **kwargs):
         self.LPM_cost = LPM_cost
         self.init_per_level = init_per_level
         self.LP_per_level = life_points_per_level
-        super(GeneralConfig, self).__init__()
+        super(GeneralConfig, self).__init__(**kwargs)
 
 
 class Stat(MultipartAttribute):
@@ -429,7 +429,7 @@ class Surprise(Resistance):
 class General:
     def get_class_lp(self):
         def class_lp(inst):
-            return self.level * self.config.LP_per_level
+            return self.config.get_level() * self.config.LP_per_level
 
         return class_lp
 
@@ -443,15 +443,15 @@ class General:
                       Stat.impl_list()}  # fixme: possibly change to clear set attributes
 
         self.maximum_life_points = LifePoints(self.config.LPM_cost)
-        self.maximum_life_points.add_bonus(self.config.__class__, lambda x: self.level * self.config.LP_per_level)
+        self.maximum_life_points.add_bonus(self.config.__class__, lambda x: self.config.get_level() * self.config.LP_per_level)
         self.maximum_life_points.add_bonus(*self.stats.get('CON').health_bonus())
 
         self.initiative = Initiative()
-        self.initiative.add_bonus(self.config.__class__, lambda x: self.level * self.config.init_per_level)
+        self.initiative.add_bonus(self.config.__class__, lambda x: self.config.get_level() * self.config.init_per_level)
         self.initiative.add_bonus(*self.stats.get('DEX').mod_bonus())  # todo: think about this
         self.initiative.add_bonus(*self.stats.get('AGI').mod_bonus())
 
-        self.cp_tracker = CreationPointTracker(CreationPoint, limit_f=lambda: self.level)
+        self.cp_tracker = CreationPointTracker(CreationPoint, limit_f=self.config.get_level)
 
         self.movement = Movement()
         self.movement.add_bonus(*self.stats.get('AGI').bonus())
@@ -467,9 +467,9 @@ class General:
 
         self.maximum_mental_health = MentalHealth()
         self.maximum_mental_health.pass_iwp(self.stats.get('INT'), self.stats.get('WIL'), self.stats.get('POW'))
-        self.maximum_mental_health.set_base_value_function(lambda: self.presence)
+        self.maximum_mental_health.set_base_value_function(self.config.get_presence)
 
-        self.resistances = {k: Resistance(k, self, presence_f=lambda: self.presence*2) for k in Resistance.impl_list()}
+        self.resistances = {k: Resistance(k, self, presence_f=lambda: self.config.get_presence()*2) for k in Resistance.impl_list()}
         for k in self.resistances:
             self.resistances[k].add_bonus(*self.stats.get(self.resistances[k].STAT).mod_bonus())
             if self.resistances[k].GNOSIS:
@@ -489,14 +489,6 @@ class General:
             except MergedResource:  # nonblocking exception
                 self.stat_points_tracker.free_resource(stp)
 
-    @property
-    def level(self) -> int:
-        return floor(self.config.get_dp() / 100)
-
-    @property
-    def presence(self):
-        return self.level * 5
-
     def boost_stat(self, stat_name, res: Resource):
         stat = self.stats.get(stat_name)
         if stat is None:
@@ -504,7 +496,7 @@ class General:
         stat.boost(res)
 
     def boost_stat_with_cp(self, stat_name, value):  # todo: catch? anything?
-        cp = self.cp_tracker.emit_resource(value=value, limit=self.level)
+        cp = self.cp_tracker.emit_resource(value=value, limit=self.config.get_level())
         return self.boost_stat(stat_name, cp)
 
 
