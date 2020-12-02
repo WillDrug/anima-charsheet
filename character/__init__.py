@@ -49,10 +49,14 @@ class Character:
     def get_dp(self):
         return self.dp
 
+    def get_gnosis(self):
+        return self.gnosis
+
     def __init__(self, classname, gnosis=10, dp=0):
         self.gnosis = gnosis
         self.dp = dp
         self.general_config.set_dpf(self.get_dp)
+        self.general_config.set_gnosis_f(self.get_gnosis)
         self.general = General(self.general_config)
 
 

@@ -49,7 +49,7 @@ class Stat(MultipartAttribute):
 
     @property
     def value(self):
-        return min(self.base_value +
+        return min(self.base_value() +
                    self.__stat_point_value() +
                    sum([
                        floor(q['boost'].value / q['cost']) for q in self.boosts
@@ -104,8 +104,42 @@ class CON(Stat):
         def bonus_append(calling_attribute):
             if traceback.format_stack().__len__() > set(traceback.format_stack()).__len__():
                 return 0
-            return 20 + 10 * self.value + self.modifier
+            return 10 * self.value + self.modifier
 
+        return self.__class__, bonus_append
+
+    def regen_bonus(self):
+        def bonus_append(calling_attribute):
+            if traceback.format_stack().__len__() > set(traceback.format_stack()).__len__():
+                return 0
+            if self.value >= 1 and self.value <= 2:
+                return 0
+            elif self.value >= 3 and self.value <= 7:
+                return 1
+            elif self.value >= 8 and self.value <= 9:
+                return 2
+            elif self.value == 10:
+                return 3
+            elif self.value == 11:
+                return 4
+            elif self.value == 12:
+                return 5
+            elif self.value == 13:
+                return 6
+            elif self.value == 14:
+                return 7
+            elif self.value == 15:
+                return 8
+            elif self.value == 16:
+                return 9
+            elif self.value == 17:
+                return 10
+            elif self.value == 18:
+                return 11
+            elif self.value == 19:
+                return 12
+            elif self.value == 20:
+                return 12
         return self.__class__, bonus_append
 
 
@@ -126,6 +160,7 @@ class PER(Stat):
 
 
 class LifePoints(Attribute):
+    BASE_VALUE = 20
     def __init__(self, LPM_cost):
         self.LPM_cost = LPM_cost  # this can be and is used by bonuses
         super().__init__()
@@ -143,7 +178,7 @@ class Weight(Attribute):
 
     # fixme: kf should be the *modifier* function
 
-    def kg(self):
+    def modifier(self):
         """
         :return: light and heavy load by something
         """
@@ -195,7 +230,10 @@ class Movement(Attribute):
     BASE_VALUE = 0
     DEFAULT_BASE_RESOURCE_CAP = 0
 
-    def meters(self):  # fixme this is some rpg bullshit right there
+    def modifier(self):
+        """
+        :return: Movement in meters
+        """
         if self.value == 1:
             return 1
         elif self.value == 2:
@@ -239,7 +277,116 @@ class Movement(Attribute):
         else:
             raise NotFound('This bs does not work with your values')
 
+class Regeneration(Attribute):
+    def modifier(self):
+        # regen, regen rest, penalty reduction
+        # fixme: change this to be usable by character controller
+        if self.value == 1:
+            return "10d", "5d", "-5d"
+        elif self.value == 2:
+            return "20d", "10d", "-5d"
+        elif self.value == 3:
+            return "30d", "15d", "-5d"
+        elif self.value == 4:
+            return "40d", "20d", "-10d"
+        elif self.value == 5:
+            return "50d", "25d", "-10d"
+        elif self.value == 6:
+            return "75d", "30", "-15d"
+        elif self.value == 7:
+            return "100d", "100d", "-20d"
+        elif self.value == 8:
+            return "250d", "200d", "-25d"
+        elif self.value == 9:
+            return "500d", "NA", "-30d"
+        elif self.value == 10:
+            return "1m", "NA", "-40d"
+        elif self.value == 11:
+            return "2m", "NA", "-50d"
+        elif self.value == 12:
+            return "5m", "NA", "-5h"
+        elif self.value == 13:
+            return "10m", "NA", "-10h"
+        elif self.value == 14:
+            return "1t", "NA", "-15h"
+        elif self.value == 15:
+            return "5t", "NA", "-20h"
+        elif self.value == 16:
+            return "10t", "NA", "-10m"
+        elif self.value == 17:
+            return "25t", "NA", "-10m"
+        elif self.value == 18:
+            return "50t", "NA", "-25m"
+        elif self.value == 19:
+            return "100t", "NA", "ALL"
+        elif self.value == 20:
+            return "250t", "NA", "ALL"
 
+class MentalHealth(Attribute):
+    iwp = None
+    def pass_iwp(self, int, wil, pow):
+        self.iwp = lambda: int.value + wil.value + pow.value
+
+    def stat_bonus(self):
+        if self.iwp is None:
+            raise NotFound('Use pass_iwp first')
+        # self bonus
+        def bonus_append(calling_instance):
+            if self.iwp() >= 3 >= self.iwp():
+                return None
+            elif self.iwp() >= 9 >= self.iwp():
+                return 20
+            elif self.iwp() >= 13 >= self.iwp():
+                return 30
+            elif self.iwp() >= 16 >= self.iwp():
+                return 50
+            elif self.iwp() >= 19 >= self.iwp():
+                return 80
+            elif self.iwp() >= 21 >= self.iwp():
+                return 120
+            elif self.iwp() >= 25 >= self.iwp():
+                return 150
+            elif self.iwp() >= 29 >= self.iwp():
+                return 200
+            elif self.iwp() >= 32 >= self.iwp():
+                return 350
+            elif self.iwp() >= 36 >= self.iwp():
+                return 500
+
+        return self.__class__, bonus_append
+
+    def modifier(self):
+        """
+        Returns mental health threshold.
+        :return:
+        """
+        if self.iwp() >= 3 >= self.iwp():
+            return None
+        elif self.iwp() >= 9 >= self.iwp():
+            return 5
+        elif self.iwp() >= 13 >= self.iwp():
+            return 10
+        elif self.iwp() >= 16 >= self.iwp():
+            return 15
+        elif self.iwp() >= 19 >= self.iwp():
+            return 20
+        elif self.iwp() >= 21 >= self.iwp():
+            return 25
+        elif self.iwp() >= 25 >= self.iwp():
+            return 30
+        elif self.iwp() >= 29 >= self.iwp():
+            return 40
+        elif self.iwp() >= 32 >= self.iwp():
+            return 50
+        elif self.iwp() >= 36 >= self.iwp():
+            return 60
+
+class Resistance(Attribute):
+    def __init__(self, presence_f, **kwargs):
+        self.set_base_value_function(presence_f)
+        super().__init__(**kwargs)
+
+# todo: refactor, move attributes to a separate file
 class General:
     def get_class_lp(self):
         def class_lp(inst):
@@ -262,13 +409,35 @@ class General:
         self.initiative.add_bonus(self.config.__class__, lambda x: self.level * self.config.init_per_level)
         self.initiative.add_bonus(*self.stats.get('DEX').mod_bonus())  # todo: think about this
         self.initiative.add_bonus(*self.stats.get('AGI').mod_bonus())
-        self.cp_tracker = CreationPointTracker(CreationPoint)
+        self.cp_tracker = CreationPointTracker(CreationPoint, limit_f=lambda: self.level)
         self.movement = Movement()
         self.movement.add_bonus(*self.stats.get('AGI').bonus())
         self.weight = Weight()
         self.weight.add_bonus(*self.stats.get('STR').bonus())
         self.fatigue_tracker = ResourceTracker(Fatigue, limit_f=lambda: self.stats.get('CON').value)
         self.willpower_tracker = ResourceTracker(Willpower, limit_f=lambda: self.stats.get('WIL').value)
+        self.regen = Regeneration()
+        self.regen.add_bonus(*self.stats.get('CON').regen_bonus())
+        self.maximum_mental_health = MentalHealth()
+        self.maximum_mental_health.pass_iwp(self.stats.get('INT'), self.stats.get('WIL'), self.stats.get('POW'))
+        self.maximum_mental_health.set_base_value_function(lambda: self.presence)
+
+        self.physical_res = Resistance(lambda: self.presence*2)
+        self.physical_res.add_bonus(*self.stats.get('CON').mod_bonus())
+        self.magic_res = Resistance(lambda: self.presence*2)
+        self.magic_res.add_bonus(*self.stats.get('POW').mod_bonus())
+        self.psychic_res = Resistance(lambda: self.presence*2)
+        self.psychic_res.add_bonus(*self.stats.get('WIL').mod_bonus())
+        self.critical_res = Resistance(lambda: self.presence*2)
+        self.critical_res.add_bonus(*self.stats.get('CON').mod_bonus())
+        self.social_res = Resistance(lambda: self.presence*2)
+        self.social_res.add_bonus(*self.stats.get('WIL').mod_bonus())
+        self.social_res.add_bonus(self.__class__, lambda x: floor(self.config.get_gnosis()/5)*40)
+        self.surprise_res = Resistance(lambda: self.presence*2)
+        self.surprise_res.add_bonus(*self.stats.get('PER').mod_bonus())
+        self.surprise_res.add_bonus(self.__class__, lambda x: floor(self.config.get_gnosis()/5)*40)
+
+
 
     @property
     def stat_costs(self):

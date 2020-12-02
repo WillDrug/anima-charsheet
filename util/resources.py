@@ -103,7 +103,7 @@ class CreationPoint(Resource):
 
     def set_usage(self, usage, stat=False):
         if (stat and self.lock_stat) or (not stat and self.lock_advantage):
-            raise OverLimit(f'This {self.__class__.__name__} can\'t be used for {"a stat" if stat else "an advantage"}')
+            raise OverLimit(f'This {self.__class__.__name__} can\'t be used for {"a stat" if not stat else "an advantage"}')
         self.used_stat = stat
         self.used_advantage = not stat
         super().set_usage(usage)

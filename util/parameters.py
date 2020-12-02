@@ -16,6 +16,12 @@ class ModuleConfig:
             raise NotEnoughData(f'{self.__name__} does not have a function to get DP from')
         return self.__dpf()
 
+    def set_gnosis_f(self, f):
+        self.__gf = f
+
+    def get_gnosis(self):
+        return self.__gf()
+
 
 
 class Attribute:
@@ -51,11 +57,16 @@ class Attribute:
     BASE_VALUE = 0  # not necessary, but a useful variable for like "base 20 initiative"
     DEFAULT_BASE_RESOURCE_COST = None
 
+    def base_value(self):
+        return self.BASE_VALUE
+
     def __init__(self, base: Resource = Resource):
-        self.base_value = self.BASE_VALUE
         self.base_resource = base
         self.boosts = []
         self.bonuses = {}
+
+    def set_base_value_function(self, f):
+        self.base_value = f
 
     @property
     def cost(self):
@@ -97,7 +108,7 @@ class Attribute:
 
     @property
     def value(self):
-        limited = self.base_value+sum([floor(q['boost'].value/q['cost']) for q in self.boosts if q['limited']]) + \
+        limited = self.base_value()+sum([floor(q['boost'].value/q['cost']) for q in self.boosts if q['limited']]) + \
                   sum([self.bonuses[q]['f'](self) for q in self.bonuses if self.bonuses[q]['limited']])
         if self.get_value_cap() is not None:
             limited = min(limited, self.get_value_cap())
