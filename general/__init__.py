@@ -140,6 +140,7 @@ class CON(Stat):
                 return 12
             elif self.value == 20:
                 return 12
+
         return self.__class__, bonus_append
 
 
@@ -161,6 +162,7 @@ class PER(Stat):
 
 class LifePoints(Attribute):
     BASE_VALUE = 20
+
     def __init__(self, LPM_cost):
         self.LPM_cost = LPM_cost  # this can be and is used by bonuses
         super().__init__()
@@ -277,6 +279,7 @@ class Movement(Attribute):
         else:
             raise NotFound('This bs does not work with your values')
 
+
 class Regeneration(Attribute):
     def modifier(self):
         # regen, regen rest, penalty reduction
@@ -322,14 +325,17 @@ class Regeneration(Attribute):
         elif self.value == 20:
             return "250t", "NA", "ALL"
 
+
 class MentalHealth(Attribute):
     iwp = None
+
     def pass_iwp(self, int, wil, pow):
         self.iwp = lambda: int.value + wil.value + pow.value
 
     def stat_bonus(self):
         if self.iwp is None:
             raise NotFound('Use pass_iwp first')
+
         # self bonus
         def bonus_append(calling_instance):
             if self.iwp() >= 3 >= self.iwp():
@@ -381,10 +387,43 @@ class MentalHealth(Attribute):
         elif self.iwp() >= 36 >= self.iwp():
             return 60
 
-class Resistance(Attribute):
-    def __init__(self, presence_f, **kwargs):
+
+class Resistance(MultipartAttribute):
+    INSTANCE_LIST = {}
+    STAT = ''
+    GNOSIS = False
+
+    def __init__(self, *args, presence_f=None, **kwargs):
         self.set_base_value_function(presence_f)
-        super().__init__(**kwargs)
+        super().__init__(*args, **kwargs)
+
+
+class Physical(Resistance):
+    STAT = 'CON'
+
+
+class Magic(Resistance):
+    STAT = 'POW'
+
+
+class Psychic(Resistance):
+    STAT = 'WIL'
+
+
+class Critical(Resistance):
+    STAT = 'CON'
+
+
+class Social(Resistance):
+    STAT = 'WIL'
+    GNOSIS = True
+
+
+class Surprise(Resistance):
+    STAT = 'PER'
+    GNOSIS = True
+
+
 
 # todo: refactor, move attributes to a separate file
 class General:
@@ -402,42 +441,39 @@ class General:
         self.config = config
         self.stats = {k: Stat(k, self, base=StatPoint) for k in
                       Stat.impl_list()}  # fixme: possibly change to clear set attributes
+
         self.maximum_life_points = LifePoints(self.config.LPM_cost)
         self.maximum_life_points.add_bonus(self.config.__class__, lambda x: self.level * self.config.LP_per_level)
         self.maximum_life_points.add_bonus(*self.stats.get('CON').health_bonus())
+
         self.initiative = Initiative()
         self.initiative.add_bonus(self.config.__class__, lambda x: self.level * self.config.init_per_level)
         self.initiative.add_bonus(*self.stats.get('DEX').mod_bonus())  # todo: think about this
         self.initiative.add_bonus(*self.stats.get('AGI').mod_bonus())
+
         self.cp_tracker = CreationPointTracker(CreationPoint, limit_f=lambda: self.level)
+
         self.movement = Movement()
         self.movement.add_bonus(*self.stats.get('AGI').bonus())
+
         self.weight = Weight()
         self.weight.add_bonus(*self.stats.get('STR').bonus())
+
         self.fatigue_tracker = ResourceTracker(Fatigue, limit_f=lambda: self.stats.get('CON').value)
         self.willpower_tracker = ResourceTracker(Willpower, limit_f=lambda: self.stats.get('WIL').value)
+
         self.regen = Regeneration()
         self.regen.add_bonus(*self.stats.get('CON').regen_bonus())
+
         self.maximum_mental_health = MentalHealth()
         self.maximum_mental_health.pass_iwp(self.stats.get('INT'), self.stats.get('WIL'), self.stats.get('POW'))
         self.maximum_mental_health.set_base_value_function(lambda: self.presence)
 
-        self.physical_res = Resistance(lambda: self.presence*2)
-        self.physical_res.add_bonus(*self.stats.get('CON').mod_bonus())
-        self.magic_res = Resistance(lambda: self.presence*2)
-        self.magic_res.add_bonus(*self.stats.get('POW').mod_bonus())
-        self.psychic_res = Resistance(lambda: self.presence*2)
-        self.psychic_res.add_bonus(*self.stats.get('WIL').mod_bonus())
-        self.critical_res = Resistance(lambda: self.presence*2)
-        self.critical_res.add_bonus(*self.stats.get('CON').mod_bonus())
-        self.social_res = Resistance(lambda: self.presence*2)
-        self.social_res.add_bonus(*self.stats.get('WIL').mod_bonus())
-        self.social_res.add_bonus(self.__class__, lambda x: floor(self.config.get_gnosis()/5)*40)
-        self.surprise_res = Resistance(lambda: self.presence*2)
-        self.surprise_res.add_bonus(*self.stats.get('PER').mod_bonus())
-        self.surprise_res.add_bonus(self.__class__, lambda x: floor(self.config.get_gnosis()/5)*40)
-
-
+        self.resistances = {k: Resistance(k, self, presence_f=lambda: self.presence*2) for k in Resistance.impl_list()}
+        for k in self.resistances:
+            self.resistances[k].add_bonus(*self.stats.get(self.resistances[k].STAT).mod_bonus())
+            if self.resistances[k].GNOSIS:
+                self.resistances[k].add_bonus(self.__class__, lambda x: floor(self.config.get_gnosis()/5)*40)
 
     @property
     def stat_costs(self):

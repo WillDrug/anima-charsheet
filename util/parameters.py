@@ -148,7 +148,7 @@ class MultipartAttribute(Attribute):
         return_class = cls.impl_list().get(attr_name, None)
         if return_class is None:
             raise NotFound(
-                "Character class not found"
+                f"{cls} class {attr_name} not found"
             )
         ret = object.__new__(return_class)
         if container not in cls.INSTANCE_LIST:
@@ -171,9 +171,9 @@ class MultipartAttribute(Attribute):
     def get_sum_base_resource_cap(self):
         return self.DEFAULT_SUM_BASE_RESOURCE_CAP
 
-    def __init__(self, attr_name, container, base: Resource): # repeated to correctyl pass attributes on
+    def __init__(self, attr_name, container, **kwargs): # repeated to correctyl pass attributes on
         self.container = container
-        super().__init__(base)
+        super().__init__(**kwargs)
 
     def check_cost(self, update_value):
         if self.get_sum_base_resource_cap() is not None:
