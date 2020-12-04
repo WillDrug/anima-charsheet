@@ -430,11 +430,11 @@ class General:
 
         return class_lp
 
-    def max_stat_points(self):
+    def get_max_stat_points(self):
         return 65
 
     def __init__(self, config: GeneralConfig):
-        self.stat_points_tracker = ResourceTracker(StatPoint, self.max_stat_points)
+        self.stat_points_tracker = ResourceTracker(StatPoint, lambda: self.get_max_stat_points())
         self.config = config
         self.stats = {k: Stat(k, self, base=StatPoint) for k in
                       Stat.impl_list()}  # fixme: possibly change to clear set attributes

@@ -110,6 +110,8 @@ class Attribute:
             if self.cost + update_value > cap:
                 raise OverLimit(f'{self.__class__} cost can\'t go over {cap}.')
 
+        super().check_cost(update_value)  # calls the Mixin if necessary
+
     def boost(self, res: Resource, cost=None,
               limited=True):  # limited is VALUE LIMIT. COST limit always applies for base_resource
         if isinstance(res, self.base_resource):
@@ -162,8 +164,7 @@ class MultipartAttributeMixin:
     def check_cost(self, update_value):
         if self.get_sum_base_resource_cap() is not None:
             if self.full_cost + update_value > self.get_sum_base_resource_cap():
-                raise OverLimit(f'Costs for {super().__class__} cannot go over {self.get_sum_base_resource_cap()}')
-        super().check_cost(update_value)
+                raise OverLimit(f'Costs for {super()} cannot go over {self.get_sum_base_resource_cap()}')
 
 
 class ChoiceAttributeMixin:
@@ -179,3 +180,6 @@ class ChoiceAttributeMixin:
     @classmethod
     def impl_list(cls) -> dict:
         return {subcl.__name__: subcl for subcl in cls.__subclasses__()}
+
+    def add_local_bonus(self, n, f, limited=True):
+        self.bonuses[n] = {'f': lambda x: 0 if not isinstance(x, self.__class__) else f(x), 'limited': limited}

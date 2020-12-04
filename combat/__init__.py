@@ -1,5 +1,6 @@
 from util.config import ModuleConfig
-from util.parameters import Attribute, MultipartAttributeMixin
+from util.parameters import MultipartAttributeMixin, ChoiceAttributeMixin
+from util.abilities import Ability
 from util.exceptions import OverLimit
 
 class CombatConfig(ModuleConfig):
@@ -12,6 +13,33 @@ class CombatConfig(ModuleConfig):
         self.block_bool = block_bool
         self.dodge_bool = dodge_bool
         super(CombatConfig, self).__init__(**kwargs)
+
+
+class CombatAbility(Ability, MultipartAttributeMixin):
+    INSTANCE_LIST = {}
+
+
+
+class Attack(CombatAbility, ChoiceAttributeMixin):
+    pass
+
+class Light(Attack):
+    STAT = 'DEX'
+
+class Heavy(Attack):
+    STAT = 'STR'
+
+class Ranged(Attack):
+    STAT = 'PER'
+
+class Defense(CombatAbility, ChoiceAttributeMixin):
+    pass
+
+class Block(Defense):
+    STAT = 'DEX'
+
+class Dodge(Defense):
+    STAT = 'AGI'
 
 class Combat:
     def __init__(self, config: CombatConfig):
