@@ -1,9 +1,9 @@
 from util.exceptions import NotFound, NotEnoughData, Panik, OverLimit, MergedResource
 from util.resources import Resource, ResourceTracker
-from util.parameters import Attribute, MultipartAttribute
+from util.parameters import Attribute, MultipartAttributeMixin, ChoiceAttributeMixin
 from util.config import ModuleConfig
-from common.resources import CreationPoint, CreationPointTracker
 from util.abilities import Ability
+from common.resources import CreationPoint, CreationPointTracker
 from .resources import Willpower, Fatigue, StatPoint
 from math import floor, inf
 import traceback
@@ -17,7 +17,7 @@ class GeneralConfig(ModuleConfig):
         super(GeneralConfig, self).__init__(**kwargs)
 
 
-class Stat(Attribute, MultipartAttribute):
+class Stat(Attribute, MultipartAttributeMixin):
     INSTANCE_LIST = {}  # important!
     # 11 physical 13 mental WOW MENTAL
     DEFAULT_VALUE_CAP = 10  # fixme
@@ -390,15 +390,9 @@ class MentalHealth(Attribute):
         elif self.iwp() >= 36 >= self.iwp():
             return 60
 
-
-class Resistance(Attribute, MultipartAttribute):
-    INSTANCE_LIST = {}
-    STAT = ''
+class Resistance(Ability, ChoiceAttributeMixin):
+    IGNORE = ['STAT']
     GNOSIS = False
-
-    def __init__(self, *args, presence_f=None, **kwargs):
-        self.set_base_value_function(presence_f)
-        super().__init__(*args, **kwargs)
 
 
 class Physical(Resistance):
@@ -472,11 +466,8 @@ class General:
         self.maximum_mental_health.pass_iwp(self.stats.get('INT'), self.stats.get('WIL'), self.stats.get('POW'))
         self.maximum_mental_health.set_base_value_function(self.config.get_presence)
 
-        self.resistances = {k: Resistance(k, self, presence_f=lambda: self.config.get_presence()*2) for k in Resistance.impl_list()}
-        for k in self.resistances:
-            self.resistances[k].add_bonus(*self.stats.get(self.resistances[k].STAT).mod_bonus())
-            if self.resistances[k].GNOSIS:
-                self.resistances[k].add_bonus(self.__class__, lambda x: floor(self.config.get_gnosis()/5)*40)
+        self.resistance = Resistance(presence_f=lambda: self.config.get_presence()*2, stat_dict=self.stats)
+        self.resistance.add_bonus(self, lambda x: 0 if not x.GNOSIS else floor(self.config.get_gnosis()/5)*40)
 
     @property
     def stat_costs(self):

@@ -1,5 +1,5 @@
 from util.config import ModuleConfig
-from util.parameters import Attribute, MultipartAttribute
+from util.parameters import Attribute, MultipartAttributeMixin
 from util.exceptions import OverLimit
 
 class CombatConfig(ModuleConfig):
