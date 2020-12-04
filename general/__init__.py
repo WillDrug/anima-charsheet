@@ -1,7 +1,9 @@
 from util.exceptions import NotFound, NotEnoughData, Panik, OverLimit, MergedResource
-from util.resources import CreationPointTracker, CreationPoint, Resource, ResourceTracker
+from util.resources import Resource, ResourceTracker
 from util.parameters import Attribute, MultipartAttribute
 from util.config import ModuleConfig
+from common.resources import CreationPoint, CreationPointTracker
+from util.abilities import Ability
 from .resources import Willpower, Fatigue, StatPoint
 from math import floor, inf
 import traceback
@@ -15,7 +17,7 @@ class GeneralConfig(ModuleConfig):
         super(GeneralConfig, self).__init__(**kwargs)
 
 
-class Stat(MultipartAttribute):
+class Stat(Attribute, MultipartAttribute):
     INSTANCE_LIST = {}  # important!
     # 11 physical 13 mental WOW MENTAL
     DEFAULT_VALUE_CAP = 10  # fixme
@@ -389,7 +391,7 @@ class MentalHealth(Attribute):
             return 60
 
 
-class Resistance(MultipartAttribute):
+class Resistance(Attribute, MultipartAttribute):
     INSTANCE_LIST = {}
     STAT = ''
     GNOSIS = False

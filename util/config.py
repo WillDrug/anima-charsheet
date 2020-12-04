@@ -1,3 +1,5 @@
+from math import floor
+
 class ModuleConfig:
 
     def __init__(self, dpf=None, gf=None, dp_limit=None, level_f=None):

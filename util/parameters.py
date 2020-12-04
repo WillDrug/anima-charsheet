@@ -41,7 +41,7 @@ class Attribute:
     def base_value(self):
         return self.BASE_VALUE
 
-    def __init__(self, base: Resource = Resource):
+    def __init__(self, *args, base: Resource = Resource):
         self.base_resource = base
         self.boosts = []
         self.bonuses = {}
@@ -118,7 +118,7 @@ class Attribute:
         self.boosts.append({'boost': res, 'limited': limited, 'cost': cost})
 
 
-class MultipartAttribute(Attribute):
+class MultipartAttribute:
     INSTANCE_LIST = {}
     DEFAULT_SUM_BASE_RESOURCE_CAP = None
 
