@@ -2,7 +2,7 @@ from combat import Combat, CombatConfig
 from magic import Magic, MagicConfig
 from psychic import Psychic, PsychicConfig
 from secondary import Secondary, SecondaryConfig
-from util.exceptions  import NotFound, NotEnoughData
+from util.exceptions import NotFound, NotEnoughData
 from general import General, GeneralConfig
 
 class Character:

@@ -1,4 +1,4 @@
-from util.parameters import ModuleConfig
+from util.config import ModuleConfig
 from util.parameters import Attribute, MultipartAttribute
 from util.exceptions import OverLimit
 

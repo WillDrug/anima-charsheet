@@ -1,6 +1,7 @@
 from util.exceptions import NotFound, NotEnoughData, Panik, OverLimit, MergedResource
 from util.resources import CreationPointTracker, CreationPoint, Resource, ResourceTracker
-from util.parameters import ModuleConfig, Attribute, MultipartAttribute
+from util.parameters import Attribute, MultipartAttribute
+from util.config import ModuleConfig
 from .resources import Willpower, Fatigue, StatPoint
 from math import floor, inf
 import traceback

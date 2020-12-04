@@ -1,5 +1,5 @@
 from util.exceptions import NotFound
-from util.parameters import ModuleConfig
+from util.config import ModuleConfig
 
 class SecondaryConfig(ModuleConfig):
     def __init__(self, skills: dict, **kwargs):
