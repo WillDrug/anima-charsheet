@@ -4,8 +4,12 @@ from .resources import Resource
 from math import floor
 import traceback
 
+class Base:
+    def __init__(self, *args, **kwargs):
+        pass
 
-class Attribute:
+
+class Attribute(Base):
     # Any attribute in the game has
     # Value limit affected resource injection
     # For the main resource, there is a value cap
@@ -41,10 +45,14 @@ class Attribute:
     def base_value(self):
         return self.BASE_VALUE
 
-    def __init__(self, *args, base: Resource = Resource, **kwargs):
+    def __init__(self, *args, base: Resource = Resource, base_lim_f=None, value_cap_f=None, **kwargs):
         self.base_resource = base
         self.boosts = []
         self.bonuses = {}
+        if base_lim_f is not None:
+            self.get_base_resource_cap = base_lim_f
+        if value_cap_f is not None:
+            self.get_value_cap = value_cap_f
         super().__init__(*args, **kwargs)
 
     def set_base_value_function(self, f):
@@ -57,7 +65,7 @@ class Attribute:
         It's the value prop of the Attribute which applies the cost for buying.
         :return: Attribut
         """
-        return sum([q.value for q in self.boosts if isinstance(q, self.base_resource)])
+        return sum([q['boost'].value for q in self.boosts if isinstance(q['boost'], self.base_resource)])
 
     def bonus(self):
         """
@@ -110,20 +118,22 @@ class Attribute:
             if self.cost + update_value > cap:
                 raise OverLimit(f'{self.__class__} cost can\'t go over {cap}.')
 
-        super().check_cost(update_value)  # calls the Mixin if necessary
+
+        super().check_sum_cost(update_value) # fixme doesn't work sometimes, might be best to declare in Base
 
     def boost(self, res: Resource, cost=None,
               limited=True):  # limited is VALUE LIMIT. COST limit always applies for base_resource
         if isinstance(res, self.base_resource):
             self.check_cost(res.value)
-            cost = self.get_base_resource_cost()  # fixme
+            if cost is None:
+                cost = self.get_base_resource_cost()  # fixme
         if cost is None:
             cost = 1
-        res.set_usage(f'Plus {res.value} to {self.__name__}')
+        res.set_usage(f'Plus {res.value} to {self.__class__}')
         self.boosts.append({'boost': res, 'limited': limited, 'cost': cost})
 
 
-class MultipartAttributeMixin:
+class MultipartAttributeMixin(Base):
     INSTANCE_LIST = {}
     DEFAULT_SUM_BASE_RESOURCE_CAP = None
 
@@ -157,17 +167,19 @@ class MultipartAttributeMixin:
     def get_sum_base_resource_cap(self):
         return self.DEFAULT_SUM_BASE_RESOURCE_CAP
 
-    def __init__(self, attr_name, container, *args, **kwargs):  # repeated to correctly pass attributes on
+    def __init__(self, attr_name, container, sum_resource_cap_f=None, *args, **kwargs):  # repeated to correctly pass attributes on
+        if sum_resource_cap_f is not None:
+            self.get_sum_base_resource_cap = sum_resource_cap_f
         self.container = container
-        super().__init__(*args, **kwargs)
+        super().__init__(*([attr_name, container] + list(args)), **kwargs)
 
-    def check_cost(self, update_value):
+    def check_sum_cost(self, update_value):
         if self.get_sum_base_resource_cap() is not None:
             if self.full_cost + update_value > self.get_sum_base_resource_cap():
                 raise OverLimit(f'Costs for {super()} cannot go over {self.get_sum_base_resource_cap()}')
 
 
-class ChoiceAttributeMixin:
+class ChoiceAttributeMixin(Base):
     IGNORE = []
 
     def __init__(self, *args, **kwargs):

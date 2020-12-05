@@ -3,6 +3,7 @@ from magic import Magic, MagicConfig
 from psychic import Psychic, PsychicConfig
 from secondary import Secondary, SecondaryConfig
 from util.exceptions import NotFound, NotEnoughData
+from common.resources import DevelopmentPoint, ResourceTracker
 from general import General, GeneralConfig
 
 class Character:
@@ -52,12 +53,15 @@ class Character:
     def __init__(self, classname, gnosis=10, dp=0):
         self.gnosis = gnosis
         self.dp = dp
-        self.general_config.set_dpf(self.get_dp)
-        self.general_config.set_gnosis_f(self.get_gnosis)
+        self.dp_tracker = ResourceTracker(DevelopmentPoint, limit_f=self.get_dp)
+        self.general_config.set_character(self)
         self.general = General(self.general_config)
-        self.combat_config.set_dpf(self.get_dp)
-        self.general_config.set_gnosis_f(self.get_gnosis)
+
+        self.combat_config.set_character(self)
         self.combat = Combat(self.combat_config)
+
+    def use_dp(self, attribute, value, cost=None):
+        attribute.boost(self.dp_tracker.emit_resource(value), cost=cost)
 
 
 class Warrior(Character):

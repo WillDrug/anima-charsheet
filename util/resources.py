@@ -23,15 +23,19 @@ class Resource:
 
 class ResourceTracker:
     def get_limit(self):
+        return self.__limit()
+
+    def __limit(self):
         raise NotImplementedError('This tracker does not support limit calculation')
 
     def __init__(self, resource: Resource, limit_f=None):
         self.resource_cls = resource
         self.track = []
-        self.get_limit = limit_f
+        if limit_f is not None:
+            self.__limit = limit_f
 
     # todo: if there are more overrides, split into distinct functions
-    def emit_resource(self, value=1, limit=None, **kwargs):
+    def emit_resource(self, value=1, **kwargs):
         try:
             if self.get_total() + value > self.get_limit():
                 raise OverLimit(f'{self.resource_cls} cannot be spent over {self.get_limit()}')
@@ -57,4 +61,3 @@ class ResourceTracker:
 
     def get_total(self):
         return sum([q.value for q in self.track])
-

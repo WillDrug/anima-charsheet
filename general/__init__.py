@@ -1,3 +1,4 @@
+
 from util.exceptions import NotFound, NotEnoughData, Panik, OverLimit, MergedResource
 from util.resources import Resource, ResourceTracker
 from util.parameters import Attribute, MultipartAttributeMixin, ChoiceAttributeMixin
@@ -78,7 +79,6 @@ class Stat(Attribute, MultipartAttributeMixin):
             res.set_usage(f'Plus {res.value} to {self.__class__}')
         if cost is None:
             cost = 1
-        res.set_usage(f'Plus {res.value} to {self.__class__}')
         self.boosts.append({'boost': res, 'limited': limited, 'cost': cost})
 
     def mod_bonus(self):
@@ -434,7 +434,7 @@ class General:
         return 65
 
     def __init__(self, config: GeneralConfig):
-        self.stat_points_tracker = ResourceTracker(StatPoint, lambda: self.get_max_stat_points())
+        self.stat_points_tracker = ResourceTracker(StatPoint, self.get_max_stat_points)
         self.config = config
         self.stats = {k: Stat(k, self, base=StatPoint) for k in
                       Stat.impl_list()}  # fixme: possibly change to clear set attributes
@@ -477,11 +477,17 @@ class General:
         for k in stats:
             if k not in Stat.impl_list():
                 raise NotFound(f'{k} is not a stat')
+            stp = None
             try:
                 stp = self.stat_points_tracker.emit_resource(stats[k])  # possible exception 1
-                self.stats[k].boost(stp)  # possible exception 2
+                self.boost_stat(k, stp)  # possible exception 2
             except MergedResource:  # nonblocking exception
-                self.stat_points_tracker.free_resource(stp)
+                if stp is not None:
+                    self.stat_points_tracker.free_resource(stp)
+            except Exception as e:  # fixme: wide exception net, poor Resource tracking
+                if stp is not None:
+                    self.stat_points_tracker.free_resource(stp)
+                raise e
 
     def boost_stat(self, stat_name, res: Resource):
         stat = self.stats.get(stat_name)
@@ -491,7 +497,11 @@ class General:
 
     def boost_stat_with_cp(self, stat_name, value):  # todo: catch? anything?
         cp = self.cp_tracker.emit_resource(value=value, limit=self.config.get_level())
-        return self.boost_stat(stat_name, cp)
+        try:
+            return self.boost_stat(stat_name, cp)
+        except Exception as e: # fixme: wide exception net, poor Resource tracking
+            self.cp_tracker.free_resource(cp)
+            raise e
 
 
 if __name__ == '__main__':

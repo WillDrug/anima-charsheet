@@ -1,4 +1,6 @@
 from util.resources import Resource, ResourceTracker
+from util.exceptions import OverLimit
+from math import ceil
 
 class CreationPointTracker(ResourceTracker):
     def get_total(self, only_stat=False, only_advantage=False):
@@ -49,3 +51,7 @@ class CreationPoint(Resource):
         self.used_stat = stat
         self.used_advantage = not stat
         super().set_usage(usage)
+
+
+class DevelopmentPoint(Resource):
+    pass
