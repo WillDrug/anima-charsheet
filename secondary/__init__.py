@@ -1,5 +1,7 @@
 from util.exceptions import NotFound
-from util.config import ModuleConfig
+from util.config import ModuleConfig, Module
+from util.parameters import MultipartAttributeMixin
+from util.abilities import Ability
 
 class SecondaryConfig(ModuleConfig):
     def __init__(self, skills: dict, **kwargs):
@@ -9,10 +11,8 @@ class SecondaryConfig(ModuleConfig):
         self.skills = skills
         super().__init__(**kwargs)
 
-class Skill:
-    @classmethod
-    def impl_list(cls) -> dict:
-        return {subcl.__name__: subcl for subcl in cls.__subclasses__()}
+class Skill(Ability, MultipartAttributeMixin):
+    pass
 
 class Acrobatics(Skill):
     pass
@@ -38,5 +38,9 @@ class Acrobatics(Skill):
 
 # class bonuses should not be calculated towards skill limit.
 
-class Secondary:
+class Secondary(Module):
     DEFAULT_COST = 2
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # add class bonuses with limited=false

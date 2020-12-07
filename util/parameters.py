@@ -45,14 +45,18 @@ class Attribute(Base):
     def base_value(self):
         return self.BASE_VALUE
 
-    def __init__(self, *args, base: Resource = Resource, base_lim_f=None, value_cap_f=None, **kwargs):
-        self.base_resource = base
+    def __init__(self, *args, base: Resource=None, base_res_cost=None,
+                 base_lim_f=None, value_cap_f=None, **kwargs):
         self.boosts = []
         self.bonuses = {}
+        if base is not None:
+            self.BASE_RESOURCE = base
         if base_lim_f is not None:
             self.get_base_resource_cap = base_lim_f
         if value_cap_f is not None:
             self.get_value_cap = value_cap_f
+        if base_res_cost is not None:
+            self.DEFAULT_BASE_RESOURCE_COST = base_res_cost
         super().__init__(*args, **kwargs)
 
     def set_base_value_function(self, f):
@@ -65,7 +69,7 @@ class Attribute(Base):
         It's the value prop of the Attribute which applies the cost for buying.
         :return: Attribut
         """
-        return sum([q['boost'].value for q in self.boosts if isinstance(q['boost'], self.base_resource)])
+        return sum([q['boost'].value for q in self.boosts if isinstance(q['boost'], self.BASE_RESOURCE)])
 
     def bonus(self):
         """
@@ -123,7 +127,7 @@ class Attribute(Base):
 
     def boost(self, res: Resource, cost=None,
               limited=True):  # limited is VALUE LIMIT. COST limit always applies for base_resource
-        if isinstance(res, self.base_resource):
+        if isinstance(res, self.BASE_RESOURCE):
             self.check_cost(res.value)
             if cost is None:
                 cost = self.get_base_resource_cost()  # fixme

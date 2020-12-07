@@ -2,7 +2,7 @@
 from util.exceptions import NotFound, NotEnoughData, Panik, OverLimit, MergedResource
 from util.resources import Resource, ResourceTracker
 from util.parameters import Attribute, MultipartAttributeMixin, ChoiceAttributeMixin
-from util.config import ModuleConfig
+from util.config import ModuleConfig, Module
 from util.abilities import Ability
 from common.resources import CreationPoint, CreationPointTracker
 from .resources import Willpower, Fatigue, StatPoint
@@ -57,7 +57,7 @@ class Stat(Attribute, MultipartAttributeMixin):
                    self.__stat_point_value() +
                    sum([
                        floor(q['boost'].value / q['cost']) for q in self.boosts
-                       if q['limited'] and not isinstance(q['boost'], self.base_resource)
+                       if q['limited'] and not isinstance(q['boost'], self.BASE_RESOURCE)
                    ]) +
                    sum([self.bonuses[q]['f'](self) for q in self.bonuses if self.bonuses[q]['limited']]),
                    self.get_value_cap()) + \
@@ -66,10 +66,10 @@ class Stat(Attribute, MultipartAttributeMixin):
 
     def boost(self, res: Resource, cost=None,
               limited=True):  # limited is VALUE LIMIT. COST limit always applies for base_resource
-        if isinstance(res, self.base_resource):
+        if isinstance(res, self.BASE_RESOURCE):
             self.check_cost(res.value)
-            if any([isinstance(q, self.base_resource) for q in self.boosts]):
-                cr = [q for q in self.boosts if isinstance(q, self.base_resource)].pop()
+            if any([isinstance(q, self.BASE_RESOURCE) for q in self.boosts]):
+                cr = [q for q in self.boosts if isinstance(q, self.BASE_RESOURCE)].pop()
                 cr.set_value(cr.get_value() + res.value)
                 raise MergedResource()
             cost = self.get_base_resource_cost()  # fixme
@@ -423,7 +423,7 @@ class Surprise(Resistance):
 
 
 # todo: refactor, move attributes to a separate file
-class General:
+class General(Module):
     def get_class_lp(self):
         def class_lp(inst):
             return self.config.get_level() * self.config.LP_per_level
@@ -433,9 +433,9 @@ class General:
     def get_max_stat_points(self):
         return 65
 
-    def __init__(self, config: GeneralConfig):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.stat_points_tracker = ResourceTracker(StatPoint, self.get_max_stat_points)
-        self.config = config
         self.stats = {k: Stat(k, self, base=StatPoint) for k in
                       Stat.impl_list()}  # fixme: possibly change to clear set attributes
 

@@ -3,7 +3,7 @@ from magic import Magic, MagicConfig
 from psychic import Psychic, PsychicConfig
 from secondary import Secondary, SecondaryConfig
 from util.exceptions import NotFound, NotEnoughData
-from common.resources import DevelopmentPoint, ResourceTracker
+from common.resources import DevelopmentPoint, DevelopmentPointTracker
 from general import General, GeneralConfig
 
 class Character:
@@ -37,11 +37,14 @@ class Character:
     BANISH = 1
     SECONDARY = {}  # fixme: class skill bonuses need to be tighter
     # / PER LEVEL
-    general_config = GeneralConfig(1, 1, 1)  # fixme: I want to somehow pass functions to get levels and shit right from here
-    combat_config = CombatConfig(1, 1, 1, 1, False, False, False, dp_limit=0.6)
-    magic_config = MagicConfig(1, 1, 1, 1, 1, 1, 1, dp_limit=0.6)
-    psychic_config = PsychicConfig(1, 1, dp_limit=0.6)
-    secondary_config = SecondaryConfig({})
+    general_config = (1, 1, 1)  # fixme: I want to somehow pass functions to get levels and shit right from here
+    combat_config = (1, 1, 1, 1, False, False, False)
+    combat_dp_limit = 0.6
+    magic_config = (1, 1, 1, 1, 1, 1, 1)
+    magic_dp_limit = 0.6
+    psychic_config = (1, 1)
+    psychic_dp_limit = 0.6
+    secondary_config = {}
     TERTIARY = 1
 
     def get_dp(self):
@@ -53,15 +56,12 @@ class Character:
     def __init__(self, classname, gnosis=10, dp=0):
         self.gnosis = gnosis
         self.dp = dp
-        self.dp_tracker = ResourceTracker(DevelopmentPoint, limit_f=self.get_dp)
-        self.general_config.set_character(self)
-        self.general = General(self.general_config)
+        self.dp_tracker = DevelopmentPointTracker(DevelopmentPoint, limit_f=self.get_dp)
+        self.general = General(GeneralConfig(*self.general_config, dp_tracker=self.dp_tracker, character=self))
 
-        self.combat_config.set_character(self)
-        self.combat = Combat(self.combat_config)
+        self.combat = Combat(CombatConfig(*self.combat_config, dp_limit=self.combat_dp_limit,
+                                          dp_tracker=self.dp_tracker, character=self))
 
-    def use_dp(self, attribute, value, cost=None):
-        attribute.boost(self.dp_tracker.emit_resource(value), cost=cost)
 
 
 class Warrior(Character):

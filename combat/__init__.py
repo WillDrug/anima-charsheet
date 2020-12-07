@@ -1,4 +1,4 @@
-from util.config import ModuleConfig
+from util.config import ModuleConfig, Module
 from util.parameters import MultipartAttributeMixin, ChoiceAttributeMixin
 from util.abilities import Ability
 from util.exceptions import OverLimit, Panik
@@ -30,7 +30,7 @@ class CombatAbility(Ability, MultipartAttributeMixin):
         defense = 0
         for q in self.INSTANCE_LIST[self.container]:
             # q is instance of attack or defense
-            sm = sum([z['boost'].value for z in q.boosts if isinstance(z['boost'], self.base_resource)])
+            sm = sum([z['boost'].value for z in q.boosts if isinstance(z['boost'], self.BASE_RESOURCE)])
             if isinstance(q, Attack):
                 attack += sm
             elif isinstance(q, Defense):
@@ -87,17 +87,24 @@ class Block(Defense):
 class Dodge(Defense):
     STAT = 'AGI'
 
-class Combat:
-    def __init__(self, config: CombatConfig):
-        # implement module specific resource limitting ??!?!
-        self.config = config
+class Combat(Module):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.attack = CombatAbility('Attack', self, presence_f=self.config.get_presence,
                                     stat_dict=self.config.character.general.stats,
                                     base_lim_f=lambda: floor(self.config.get_dp()*0.2),
-                                    sum_resource_cap_f=lambda: floor(self.config.get_dp()*0.4))
+                                    sum_resource_cap_f=lambda: floor(self.config.get_dp()*0.5),
+                                    base_res_cost=self.config.attack_cost)
         self.attack.add_bonus(self, lambda x: floor(2.5*(self.config.attack_bool+1)*self.config.get_level()))
         self.defense = CombatAbility('Defense', self, presence_f=self.config.get_presence,
                                      stat_dict=self.config.character.general.stats,
                                      base_lim_f=lambda: floor(self.config.get_dp()*0.2),
-                                     sum_resource_cap_f=lambda: floor(self.config.get_dp()*0.4))
-        self.defense.add_bonus(self, lambda x: floor(2.5*(self.config.defense_bool+1)*self.config.get_level()))
+                                     sum_resource_cap_f=lambda: floor(self.config.get_dp()*0.5),
+                                     base_res_cost=self.config.defense_cost)
+        self.defense.block.add_local_bonus(self, lambda x: floor(
+            2.5 * (self.config.block_bool + 1) * self.config.get_level()),
+                                           limited=True)
+        self.defense.dodge.add_local_bonus(self, lambda x: floor(
+            2.5 * (self.config.dodge_bool + 1) * self.config.get_level()),
+                                           limited=True)
+

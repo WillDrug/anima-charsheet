@@ -10,7 +10,7 @@ tr = ResourceTracker(DevelopmentPoint)
 
 char = Character('Warrior', dp=900)
 char.general.set_stats({'STR': 11, 'CON': 11, 'DEX': 11, 'AGI': 11})
-
+char.combat.boost(char.combat.attack, 180)
 print(char.combat.attack.heavy.value)
 print(char.combat.attack.light.value)
 print(char.combat.attack.ranged.value)
