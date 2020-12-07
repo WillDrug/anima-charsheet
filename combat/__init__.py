@@ -1,6 +1,6 @@
 from util.config import ModuleConfig, Module
 from util.parameters import MultipartAttributeMixin, ChoiceAttributeMixin
-from util.abilities import Ability
+from util.abilities import Ability, Attribute
 from util.exceptions import OverLimit, Panik
 from math import floor
 from common.resources import DevelopmentPoint
@@ -86,6 +86,10 @@ class Block(Defense):
 
 class Dodge(Defense):
     STAT = 'AGI'
+
+class Dominion(Attribute):
+    BASE_RESOURCE = DevelopmentPoint
+
 
 class Combat(Module):
     def __init__(self, *args, **kwargs):

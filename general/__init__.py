@@ -5,7 +5,7 @@ from util.parameters import Attribute, MultipartAttributeMixin, ChoiceAttributeM
 from util.config import ModuleConfig, Module
 from util.abilities import Ability
 from common.resources import CreationPoint, CreationPointTracker
-from .resources import Willpower, Fatigue, StatPoint
+from .resources import StatPoint
 from math import floor, inf
 import traceback
 
@@ -175,6 +175,7 @@ class LifePoints(Attribute):
 class Initiative(Attribute):  # fixme: separation of boint-buy and resource boosts are kinda dumb
     BASE_VALUE = 20
     DEFAULT_BASE_RESOURCE_CAP = 0  # can't update
+
 
 
 class Weight(Attribute):
@@ -420,7 +421,11 @@ class Surprise(Resistance):
     STAT = 'PER'
     GNOSIS = True
 
+class Willpower(Attribute):
+    pass
 
+class Fatigue(Attribute):
+    pass
 
 # todo: refactor, move attributes to a separate file
 class General(Module):
@@ -456,8 +461,12 @@ class General(Module):
         self.weight = Weight()
         self.weight.add_bonus(*self.stats.get('STR').bonus())
 
-        self.fatigue_tracker = ResourceTracker(Fatigue, limit_f=lambda: self.stats.get('CON').value)
-        self.willpower_tracker = ResourceTracker(Willpower, limit_f=lambda: self.stats.get('WIL').value)
+        # fixme: either do a tracker for every resource or turn those into Attributes
+        # fixme: make low fatigue affect shit
+        self.fatigue = Fatigue()
+        self.fatigue.add_bonus(*self.stats.get('CON').bonus())
+        self.willpower = Willpower()
+        self.willpower.add_bonus(*self.stats.get('WIL').bonus())
 
         self.regen = Regeneration()
         self.regen.add_bonus(*self.stats.get('CON').regen_bonus())
