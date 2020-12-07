@@ -38,7 +38,7 @@ class Character:
     SECONDARY = {}  # fixme: class skill bonuses need to be tighter
     # / PER LEVEL
     general_config = (1, 1, 1)  # fixme: I want to somehow pass functions to get levels and shit right from here
-    combat_config = (1, 1, 1, 1, False, False, False)
+    combat_config = (1, 1, 1, 1, False, False, False, 10)
     combat_dp_limit = 0.6
     magic_config = (1, 1, 1, 1, 1, 1, 1)
     magic_dp_limit = 0.6

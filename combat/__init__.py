@@ -6,7 +6,7 @@ from math import floor
 from common.resources import DevelopmentPoint
 
 class CombatConfig(ModuleConfig):
-    def __init__(self, attack_cost, defense_cost, domine_cost, domine_accumulation_cost, attack_bool, block_bool, dodge_bool, **kwargs):
+    def __init__(self, attack_cost, defense_cost, domine_cost, domine_accumulation_cost, attack_bool, block_bool, dodge_bool, mk_per_level, **kwargs):
         self.attack_cost = attack_cost
         self.defense_cost = defense_cost
         self.domine_cost = domine_cost
@@ -14,6 +14,7 @@ class CombatConfig(ModuleConfig):
         self.attack_bool = attack_bool
         self.block_bool = block_bool
         self.dodge_bool = dodge_bool
+        self.mk_per_level = mk_per_level
         super(CombatConfig, self).__init__(**kwargs)
 
 
@@ -89,6 +90,32 @@ class Dodge(Defense):
 
 class Dominion(Attribute):
     BASE_RESOURCE = DevelopmentPoint
+    DEFAULT_BASE_RESOURCE_COST = 2
+
+class Accumulation(Attribute):
+    BASE_RESOURCE = DevelopmentPoint
+    DEFAULT_BASE_RESOURCE_COST = 20
+
+    @classmethod
+    def impl_list(cls) -> dict:
+        return {subcl.__name__: subcl for subcl in cls.__subclasses__()}
+
+class STR(Accumulation):  # todo same class names are an anti-pattern but THIS IS SO USEFUL :(
+    pass
+class DEX(Accumulation):
+    pass
+class AGI(Accumulation):
+    pass
+class CON(Accumulation):
+    pass
+class POW(Accumulation):
+    pass
+class WIL(Accumulation):
+    pass
+
+class MaximumMartialKnowledge(Attribute):  # martial arts give MK, oh fuck me
+    BASE_RESOURCE = DevelopmentPoint
+    DEFAULT_BASE_RESOURCE_COST = 5
 
 
 class Combat(Module):
@@ -111,4 +138,12 @@ class Combat(Module):
         self.defense.dodge.add_local_bonus(self, lambda x: floor(
             2.5 * (self.config.dodge_bool + 1) * self.config.get_level()),
                                            limited=True)
-
+        self.dominion = Dominion(base_res_cost=self.config.domine_cost)
+        self.dominion.add_bonus(self, lambda x: floor(self.config.get_presence()/5))
+        for stat in Accumulation.impl_list():  # fixme: move into parameters?
+            self.dominion.add_bonus(*self.config.character.general.stats.get(stat).domine_bonus())
+        self.accumulations = {k: Accumulation.impl_list()[k]() for k in Accumulation.impl_list()}
+        for k in self.accumulations:
+            self.accumulations[k].add_bonus(*self.config.character.general.stats.get(k).domine_accum_bonus())
+        self.maximum_martial_knowledge = MaximumMartialKnowledge(base_lim_f=lambda: floor(self.config.get_dp()/10))
+        self.maximum_martial_knowledge.add_bonus(self, lambda x: self.config.get_level()*self.config.mk_per_level)

@@ -8,6 +8,8 @@ class Base:
     def __init__(self, *args, **kwargs):
         pass
 
+    def check_sum_cost(self, *args, **kwargs):  # todo: check if this is working properly. a cheeky hack :(
+        pass
 
 class Attribute(Base):
     # Any attribute in the game has

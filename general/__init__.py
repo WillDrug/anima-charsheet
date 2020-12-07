@@ -89,6 +89,29 @@ class Stat(Attribute, MultipartAttributeMixin):
 
         return self.__class__, bonus_append
 
+    def domine_bonus(self):
+        def bonus_append(calling_attribute):
+            if self.value < 11:
+                return self.value
+            elif self.value < 20:
+                return (self.value-10)*2+self.value
+            else:
+                return (self.value-10)*3
+
+        return self.__class__, bonus_append
+
+    def domine_accum_bonus(self):
+        def bonus_append(calling_attribute):  # fixme is this a formula?
+            if self.value < 10:
+                return 1
+            elif self.value < 13:
+                return 2
+            elif self.value < 16:
+                return 3
+            else:
+                return 4
+
+        return self.__class__, bonus_append
 
 class STR(Stat):
     pass
@@ -163,7 +186,7 @@ class PER(Stat):
     PHYSICAL = False
 
 
-class LifePoints(Attribute):
+class MaximumLifePoints(Attribute):
     BASE_VALUE = 20
 
     def __init__(self, LPM_cost):
@@ -183,7 +206,7 @@ class Weight(Attribute):
     DEFAULT_BASE_RESOURCE_CAP = 0  # can't update
 
     # fixme: kf should be the *modifier* function
-
+    @property
     def modifier(self):
         """
         :return: light and heavy load by something
@@ -235,7 +258,7 @@ class Weight(Attribute):
 class Movement(Attribute):
     BASE_VALUE = 0
     DEFAULT_BASE_RESOURCE_CAP = 0
-
+    @property
     def modifier(self):
         """
         :return: Movement in meters
@@ -285,6 +308,7 @@ class Movement(Attribute):
 
 
 class Regeneration(Attribute):
+    @property
     def modifier(self):
         # regen, regen rest, penalty reduction
         # fixme: change this to be usable by character controller
@@ -330,7 +354,7 @@ class Regeneration(Attribute):
             return "250t", "NA", "ALL"
 
 
-class MentalHealth(Attribute):
+class MaximumMentalHealth(Attribute):
     iwp = None
 
     def pass_iwp(self, int, wil, pow):
@@ -364,7 +388,7 @@ class MentalHealth(Attribute):
                 return 500
 
         return self.__class__, bonus_append
-
+    @property
     def modifier(self):
         """
         Returns mental health threshold.
@@ -421,10 +445,10 @@ class Surprise(Resistance):
     STAT = 'PER'
     GNOSIS = True
 
-class Willpower(Attribute):
+class MaximumWillpower(Attribute):
     pass
 
-class Fatigue(Attribute):
+class MaximumFatigue(Attribute):
     pass
 
 # todo: refactor, move attributes to a separate file
@@ -444,7 +468,7 @@ class General(Module):
         self.stats = {k: Stat(k, self, base=StatPoint) for k in
                       Stat.impl_list()}  # fixme: possibly change to clear set attributes
 
-        self.maximum_life_points = LifePoints(self.config.LPM_cost)
+        self.maximum_life_points = MaximumLifePoints(self.config.LPM_cost)
         self.maximum_life_points.add_bonus(self.config.__class__, lambda x: self.config.get_level() * self.config.LP_per_level)
         self.maximum_life_points.add_bonus(*self.stats.get('CON').health_bonus())
 
@@ -463,15 +487,15 @@ class General(Module):
 
         # fixme: either do a tracker for every resource or turn those into Attributes
         # fixme: make low fatigue affect shit
-        self.fatigue = Fatigue()
-        self.fatigue.add_bonus(*self.stats.get('CON').bonus())
-        self.willpower = Willpower()
-        self.willpower.add_bonus(*self.stats.get('WIL').bonus())
+        self.maximum_fatigue = MaximumFatigue()
+        self.maximum_fatigue.add_bonus(*self.stats.get('CON').bonus())
+        self.maximum_willpower = MaximumWillpower()
+        self.maximum_willpower.add_bonus(*self.stats.get('WIL').bonus())
 
         self.regen = Regeneration()
         self.regen.add_bonus(*self.stats.get('CON').regen_bonus())
 
-        self.maximum_mental_health = MentalHealth()
+        self.maximum_mental_health = MaximumMentalHealth()
         self.maximum_mental_health.pass_iwp(self.stats.get('INT'), self.stats.get('WIL'), self.stats.get('POW'))
         self.maximum_mental_health.set_base_value_function(self.config.get_presence)
 
@@ -482,7 +506,7 @@ class General(Module):
     def stat_costs(self):
         return Stat.cls_full_cost(self)
 
-    def set_stats(self, stats: dict):
+    def invest_into_stats(self, stats: dict):  # fixme better name
         for k in stats:
             if k not in Stat.impl_list():
                 raise NotFound(f'{k} is not a stat')
