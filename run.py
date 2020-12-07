@@ -10,8 +10,7 @@ from common.resources import DevelopmentPoint
 tr = ResourceTracker(DevelopmentPoint)
 
 char = Character('Warrior', dp=900)
-char.general.invest_into_stats({'STR': 11, 'CON': 11, 'DEX': 11, 'AGI': 11})
-char.combat.boost(char.combat.attack, 180)
-char.combat.boost(char.combat.dominion, 100)
-char.combat.boost(char.combat.maximum_martial_knowledge, 10)
-print(char.combat.maximum_martial_knowledge.value)
+char.general.invest_into_stats({'STR': 11, 'CON': 11, 'DEX': 11, 'POW': 11})
+char.magic.boost(char.magic.magic_accumulation, 2)
+print(char.magic.magic_accumulation.value)
+

@@ -92,7 +92,7 @@ class Dominion(Attribute):
     BASE_RESOURCE = DevelopmentPoint
     DEFAULT_BASE_RESOURCE_COST = 2
 
-class Accumulation(Attribute):
+class DominionAccumulation(Attribute):
     BASE_RESOURCE = DevelopmentPoint
     DEFAULT_BASE_RESOURCE_COST = 20
 
@@ -100,17 +100,17 @@ class Accumulation(Attribute):
     def impl_list(cls) -> dict:
         return {subcl.__name__: subcl for subcl in cls.__subclasses__()}
 
-class STR(Accumulation):  # todo same class names are an anti-pattern but THIS IS SO USEFUL :(
+class STR(DominionAccumulation):  # todo same class names are an anti-pattern but THIS IS SO USEFUL :(
     pass
-class DEX(Accumulation):
+class DEX(DominionAccumulation):
     pass
-class AGI(Accumulation):
+class AGI(DominionAccumulation):
     pass
-class CON(Accumulation):
+class CON(DominionAccumulation):
     pass
-class POW(Accumulation):
+class POW(DominionAccumulation):
     pass
-class WIL(Accumulation):
+class WIL(DominionAccumulation):
     pass
 
 class MaximumMartialKnowledge(Attribute):  # martial arts give MK, oh fuck me
@@ -140,9 +140,9 @@ class Combat(Module):
                                            limited=True)
         self.dominion = Dominion(base_res_cost=self.config.domine_cost)
         self.dominion.add_bonus(self, lambda x: floor(self.config.get_presence()/5))
-        for stat in Accumulation.impl_list():  # fixme: move into parameters?
+        for stat in DominionAccumulation.impl_list():  # fixme: move into parameters?
             self.dominion.add_bonus(*self.config.character.general.stats.get(stat).domine_bonus())
-        self.accumulations = {k: Accumulation.impl_list()[k]() for k in Accumulation.impl_list()}
+        self.accumulations = {k: DominionAccumulation.impl_list()[k]() for k in DominionAccumulation.impl_list()}
         for k in self.accumulations:
             self.accumulations[k].add_bonus(*self.config.character.general.stats.get(k).domine_accum_bonus())
         self.maximum_martial_knowledge = MaximumMartialKnowledge(base_lim_f=lambda: floor(self.config.get_dp()/10))

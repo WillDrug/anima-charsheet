@@ -61,6 +61,8 @@ class Character:
 
         self.combat = Combat(CombatConfig(*self.combat_config, dp_limit=self.combat_dp_limit,
                                           dp_tracker=self.dp_tracker, character=self))
+        self.magic = Magic(MagicConfig(*self.magic_config, dp_limit=self.magic_dp_limit,
+                                       dp_tracker=self.dp_tracker, character=self))
 
 
 

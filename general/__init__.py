@@ -177,6 +177,12 @@ class INT(Stat):
 class POW(Stat):
     PHYSICAL = False
 
+    def magic_accum_bonus(self):
+        def bonus_append(maa):
+            return self.value*(1+sum([floor(q['boost'].value/q['cost']) for q in maa.boosts if isinstance(q['boost'], maa.BASE_RESOURCE)]))
+
+        return self, bonus_append
+
 
 class WIL(Stat):
     PHYSICAL = False

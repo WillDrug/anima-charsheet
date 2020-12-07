@@ -105,13 +105,15 @@ class Attribute(Base):
         self.bonuses[n] = {'f': f, 'limited': limited}
 
     @property
-    def value(self):
-        limited = self.base_value() + sum([floor(q['boost'].value / q['cost']) for q in self.boosts if q['limited']]) + \
+    def value(self): # override: does not include base resource.
+        limited = self.base_value() + sum([floor(q['boost'].value / q['cost']) for q in self.boosts if q['limited']]
+                                          and not isinstance(q['boost'], self.BASE_RESOURCE)) + \
                   sum([self.bonuses[q]['f'](self) for q in self.bonuses if self.bonuses[q]['limited']])
         if self.get_value_cap() is not None:
             limited = min(limited, self.get_value_cap())
         return limited + \
-               sum([floor(q['boost'].value / q['cost']) for q in self.boosts if not q['limited']]) + \
+               sum([floor(q['boost'].value / q['cost']) for q in self.boosts if not q['limited']
+                    and not isinstance(q['boost'], self.BASE_RESOURCE)]) + \
                sum([self.bonuses[q]['f'](self) for q in self.bonuses if not self.bonuses[q]['limited']])
 
     @property
