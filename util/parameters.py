@@ -106,8 +106,7 @@ class Attribute(Base):
 
     @property
     def value(self): # override: does not include base resource.
-        limited = self.base_value() + sum([floor(q['boost'].value / q['cost']) for q in self.boosts if q['limited']]
-                                          and not isinstance(q['boost'], self.BASE_RESOURCE)) + \
+        limited = self.base_value() + sum([floor(q['boost'].value / q['cost']) for q in self.boosts if q['limited']])+\
                   sum([self.bonuses[q]['f'](self) for q in self.bonuses if self.bonuses[q]['limited']])
         if self.get_value_cap() is not None:
             limited = min(limited, self.get_value_cap())

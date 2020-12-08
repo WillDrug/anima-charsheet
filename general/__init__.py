@@ -173,20 +173,117 @@ class CON(Stat):
 class INT(Stat):
     PHYSICAL = False
 
+    def pp_bonus(self):
+        def bonus_append(mpp):
+            return self.value/5
+        return self, bonus_append
+
+    def magic_level_bonus(self):
+        def bonus_append(ml):
+            levels = 0
+            if self.value <= 5:
+                levels = 0
+            elif self.value == 6:
+                levels = 10
+            elif self.value == 7:
+                levels = 20
+            elif self.value == 8:
+                levels = 30
+            elif self.value == 9:
+                levels = 40
+            elif self.value == 10:
+                levels = 50
+            elif self.value == 11:
+                levels = 75
+            elif self.value == 12:
+                levels = 100
+            elif self.value == 13:
+                levels = 125
+            elif self.value == 14:
+                levels = 150
+            elif self.value == 15:
+                levels = 175
+            elif self.value == 16:
+                levels = 200
+            elif self.value == 17:
+                levels = 250
+            elif self.value == 18:
+                levels = 300
+            elif self.value == 19:
+                levels = 350
+            elif self.value >= 20:
+                levels = 400
+            return levels
+        return self, bonus_append
 
 class POW(Stat):
     PHYSICAL = False
 
     def magic_accum_bonus(self):
         def bonus_append(maa):
-            return self.value*(1+sum([floor(q['boost'].value/q['cost']) for q in maa.boosts if isinstance(q['boost'], maa.BASE_RESOURCE)]))
+            accum = 0
+            if self.value <= 7:
+                accum = 5
+            elif 8 <= self.value <= 11:
+                accum = 10
+            elif 12 <= self.value <= 14:
+                accum = 15
+            elif self.value == 15:
+                accum = 20
+            elif 16 <= self.value <= 17:
+                accum = 25
+            elif 18 <= self.value <= 19:
+                accum = 30
+            elif self.value >= 20:
+                accum = 35
+            return accum*(1+sum([floor(q['boost'].value/q['cost']) for q in maa.boosts
+                                 if isinstance(q['boost'], maa.BASE_RESOURCE)]))
 
         return self, bonus_append
 
 
 class WIL(Stat):
     PHYSICAL = False
+    def psy_potential_bonus(self):
+        def bonus_append(pot):
+            if self.value <= 4:
+                return 0
+            elif self.value == 5:
+                return 10
+            elif self.value == 6:
+                return 20
+            elif self.value == 7:
+                return 30
+            elif self.value == 8:
+                return 40
+            elif self.value == 9:
+                return 50
+            elif self.value == 10:
+                return 60
+            elif self.value == 11:
+                return 65
+            elif self.value == 12:
+                return 70
+            elif self.value == 13:
+                return 75
+            elif self.value == 14:
+                return 80
+            elif self.value == 15:
+                return 85
+            elif self.value == 16:
+                return 90
+            elif self.value == 17:
+                return 100
+            elif self.value == 18:
+                return 110
+            elif self.value == 19:
+                return 120
+            elif self.value == 20:
+                return 130
+            else:
+                raise NotEnoughData(f'How is your stat > 20?!')
 
+        return self, bonus_append
 
 class PER(Stat):
     PHYSICAL = False

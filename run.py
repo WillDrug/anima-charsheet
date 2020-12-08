@@ -10,7 +10,7 @@ from common.resources import DevelopmentPoint
 tr = ResourceTracker(DevelopmentPoint)
 
 char = Character('Warrior', dp=900)
-char.general.invest_into_stats({'STR': 11, 'CON': 11, 'DEX': 11, 'POW': 11})
-char.magic.boost(char.magic.magic_accumulation, 2)
-print(char.magic.magic_accumulation.value)
+char.general.invest_into_stats({'STR': 11, 'CON': 11, 'DEX': 11, 'POW': 11, 'INT': 10})
+char.magic.boost(char.magic.zeon_regeneration, 0)
+print(char.magic.zeon_regeneration.value)
 

@@ -40,9 +40,9 @@ class Character:
     general_config = (1, 1, 1)  # fixme: I want to somehow pass functions to get levels and shit right from here
     combat_config = (1, 1, 1, 1, False, False, False, 10)
     combat_dp_limit = 0.6
-    magic_config = (1, 1, 1, 1, 1, 1, 1)
+    magic_config = (1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
     magic_dp_limit = 0.6
-    psychic_config = (1, 1)
+    psychic_config = (1, 1, 1, 1)
     psychic_dp_limit = 0.6
     secondary_config = {}
     TERTIARY = 1
@@ -53,6 +53,7 @@ class Character:
     def get_gnosis(self):
         return self.gnosis
 
+    # todo: add value getting here keeping INHUMAN limit and stuff
     def __init__(self, classname, gnosis=10, dp=0):
         self.gnosis = gnosis
         self.dp = dp
@@ -63,6 +64,8 @@ class Character:
                                           dp_tracker=self.dp_tracker, character=self))
         self.magic = Magic(MagicConfig(*self.magic_config, dp_limit=self.magic_dp_limit,
                                        dp_tracker=self.dp_tracker, character=self))
+        self.psychic = Psychic(PsychicConfig(*self.psychic_config, dp_limit=self.psychic_dp_limit,
+                                             dp_tracker=self.dp_tracker, character=self))
 
 
 
