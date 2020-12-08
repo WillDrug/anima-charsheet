@@ -113,6 +113,11 @@ class Stat(Attribute, MultipartAttributeMixin):
 
         return self.__class__, bonus_append
 
+    def secondary_bonus(self):
+        def bonus_append(skill):
+            return self.modifier*skill.innate
+        return self, bonus_append
+
 class STR(Stat):
     pass
 
@@ -176,7 +181,7 @@ class INT(Stat):
     def pp_bonus(self):
         def bonus_append(mpp):
             return self.value/5
-        return self, bonus_append
+        return self.__class__, bonus_append
 
     def magic_level_bonus(self):
         def bonus_append(ml):
@@ -214,7 +219,7 @@ class INT(Stat):
             elif self.value >= 20:
                 levels = 400
             return levels
-        return self, bonus_append
+        return self.__class__, bonus_append
 
 class POW(Stat):
     PHYSICAL = False
@@ -236,10 +241,10 @@ class POW(Stat):
                 accum = 30
             elif self.value >= 20:
                 accum = 35
-            return accum*(1+sum([floor(q['boost'].value/q['cost']) for q in maa.boosts
-                                 if isinstance(q['boost'], maa.BASE_RESOURCE)]))
+            return accum  #*(1+sum([floor(q['boost'].value/q['cost']) for q in maa.boosts
+                          #         if isinstance(q['boost'], maa.BASE_RESOURCE)]))
 
-        return self, bonus_append
+        return self.__class__, bonus_append
 
 
 class WIL(Stat):
@@ -283,7 +288,7 @@ class WIL(Stat):
             else:
                 raise NotEnoughData(f'How is your stat > 20?!')
 
-        return self, bonus_append
+        return self.__class__, bonus_append
 
 class PER(Stat):
     PHYSICAL = False
@@ -632,10 +637,10 @@ class General(Module):
         stat.boost(res)
 
     def boost_stat_with_cp(self, stat_name, value):  # todo: catch? anything?
-        cp = self.cp_tracker.emit_resource(value=value, limit=self.config.get_level())
+        cp = self.cp_tracker.emit_resource(value=value)
         try:
             return self.boost_stat(stat_name, cp)
-        except Exception as e: # fixme: wide exception net, poor Resource tracking
+        except Exception as e:  # fixme: wide exception net, poor Resource tracking
             self.cp_tracker.free_resource(cp)
             raise e
 

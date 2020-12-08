@@ -11,6 +11,7 @@ tr = ResourceTracker(DevelopmentPoint)
 
 char = Character('Warrior', dp=900)
 char.general.invest_into_stats({'STR': 11, 'CON': 11, 'DEX': 11, 'POW': 11, 'INT': 10})
-char.magic.boost(char.magic.zeon_regeneration, 0)
-print(char.magic.zeon_regeneration.value)
+char.general.boost_stat_with_cp('POW', 5)
+char.magic.boost(char.magic.magic_accumulation, 1)
+print(char.secondary.skills['Acrobatics'].value)
 

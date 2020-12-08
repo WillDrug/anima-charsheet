@@ -64,3 +64,79 @@ class ResourceTracker:
         return sum([q.value for q in self.track])
 
 
+class IterativePointTracker(ResourceTracker):
+    def get_total(self, only_one=False, only_two=False):
+        if only_one == only_two:
+            return super().get_total()
+        if only_one:
+            return sum([q.value for q in self.track if q.used_one == True])
+        if only_two:
+            return sum([q.value for q in self.track if q.used_two == True])
+
+    def emit_resource(self, value=1, **kwargs):
+        lock_one = False
+        lock_two = False
+        if self.get_limit() is not None:
+            if self.get_total() + value > self.get_limit():
+                raise OverLimit(f'There is no {self.resource_cls} left')
+            if self.get_total(only_one=True) + value > ceil(self.get_limit() / 2):
+                lock_one = True
+            if self.get_total(only_two=True) + value > ceil(self.get_limit() / 2):
+                lock_two = True
+            if not lock_one and not lock_two:
+                if self.get_total(only_one=True) + value > self.get_limit() / 2 and self.get_total(
+                        only_two=True) + value > self.get_limit() / 2:
+                    if self.track.__len__() > 0:
+                        if self.track[-1].used_one:
+                            lock_one = True
+                        else:
+                            lock_two = True
+            if lock_two and lock_one:
+                raise OverLimit(f'Too much {self.resource_cls} requested for single use')
+            res = self.resource_cls(value=value, lock_one=lock_one, lock_two=lock_two)
+            self.track.append(res)
+            return res
+
+
+class IterativePoint(Resource):
+    def __init__(self, lock_one=False, lock_two=False, **kwargs):
+        super().__init__(**kwargs)
+        self.lock_one = lock_one
+        self.lock_two = lock_two
+        self.used_one = None
+        self.used_two = None
+
+    def set_usage(self, usage, one=False):
+        if (one and self.lock_one) or (not one and self.lock_two):
+            raise OverLimit(f'This {self.__class__} can\'t be used for this purpose.')
+        self.used_one = one
+        self.used_two = not one
+        super().set_usage(usage)
+
+
+class LocalLimitedPointTracker(ResourceTracker):
+    def __init__(self, *args, **kwargs):
+        self.local_limits = {}
+        super().__init__(*args, **kwargs)
+
+    def add_local_limit(self, k, limit_f=None, limit_pct=None):
+        if limit_f is None and limit_pct is None:
+            raise NotEnoughData('Provide either a lim function or lim percentage')
+        if limit_pct is not None:
+            limit_f = lambda: floor(self.get_limit()*limit_pct)
+        self.local_limits[k] = limit_f
+
+    def get_local_limit(self, module):
+        if self.local_limits.get(module) is not None:
+            return self.local_limits.get(module)()
+        else:
+            raise NotEnoughData('Local limit called with no local limit function set')  # fixme this should not be happening
+
+    def get_local(self, usage):
+        return sum([q.value for q in self.track if q.usage == usage])
+
+    def emit_resource(self, value, module):
+        if module in self.local_limits:
+            if self.get_local(module)+value > self.get_local_limit(module):
+                raise OverLimit(f'Local DP limit for {module} exceeded')
+        return super().emit_resource(value)

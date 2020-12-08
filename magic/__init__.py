@@ -1,7 +1,8 @@
 from util.config import ModuleConfig, Module
 from util.parameters import Attribute
-from util.abilities import Ability, BaseResourceFree
+from util.abilities import Ability
 from common.resources import DevelopmentPoint
+from general import POW
 from math import floor
 
 class MagicConfig(ModuleConfig):
@@ -20,8 +21,15 @@ class MagicConfig(ModuleConfig):
         self.banish_per_level = banish_per_level
         super().__init__(**kwargs)
 
-class MagicAccumulation(BaseResourceFree):
+class MagicAccumulation(Attribute):
     BASE_RESOURCE = DevelopmentPoint
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.resource_f[DevelopmentPoint] = self.calculate_multiples
+
+    def calculate_multiples(self, boost):
+        return floor(boost['boost'].value/boost['cost'])*self.bonuses.get(POW)['f'](self)
 
     def calculate_innate(self):
         if self.value < 55:
@@ -50,7 +58,7 @@ class MagicLevel(Attribute):
 class MaximumZeon(Attribute):
     BASE_RESOURCE = DevelopmentPoint
 
-class ZeonRegeneration(BaseResourceFree):
+class ZeonRegeneration(Attribute):
     BASE_RESOURCE = DevelopmentPoint
 
 class InnateMagic(Attribute):

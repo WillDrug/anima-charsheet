@@ -27,15 +27,6 @@ class Character:
 
     # PER LEVEL  fixme: package those up
     MK = 1
-    PSY_PTS = 1
-    ML = 1
-    PSY_POT = 1
-    ZEON = 1
-    SUMMON = 1
-    CONTROL = 1
-    BIND = 1
-    BANISH = 1
-    SECONDARY = {}  # fixme: class skill bonuses need to be tighter
     # / PER LEVEL
     general_config = (1, 1, 1)  # fixme: I want to somehow pass functions to get levels and shit right from here
     combat_config = (1, 1, 1, 1, False, False, False, 10)
@@ -44,7 +35,7 @@ class Character:
     magic_dp_limit = 0.6
     psychic_config = (1, 1, 1, 1)
     psychic_dp_limit = 0.6
-    secondary_config = {}
+    secondary_config = ({}, {})
     TERTIARY = 1
 
     def get_dp(self):
@@ -66,6 +57,7 @@ class Character:
                                        dp_tracker=self.dp_tracker, character=self))
         self.psychic = Psychic(PsychicConfig(*self.psychic_config, dp_limit=self.psychic_dp_limit,
                                              dp_tracker=self.dp_tracker, character=self))
+        self.secondary = Secondary(SecondaryConfig(*self.secondary_config, dp_tracker=self.dp_tracker, character=self))
 
 
 

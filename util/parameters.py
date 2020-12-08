@@ -49,6 +49,7 @@ class Attribute(Base):
 
     def __init__(self, *args, base: Resource=None, base_res_cost=None,
                  base_lim_f=None, value_cap_f=None, **kwargs):
+        self.resource_f = {}
         self.boosts = []
         self.bonuses = {}
         if base is not None:
@@ -104,14 +105,20 @@ class Attribute(Base):
         """
         self.bonuses[n] = {'f': f, 'limited': limited}
 
+    def __parse_boost(self, boost: dict):
+        return floor(boost['boost'].value/boost['cost'])
+
+    def parse_boost(self, boost: dict):
+        return self.resource_f.get(boost['boost'].__class__, self.__parse_boost)(boost)
+
     @property
     def value(self): # override: does not include base resource.
-        limited = self.base_value() + sum([floor(q['boost'].value / q['cost']) for q in self.boosts if q['limited']])+\
+        limited = self.base_value() + sum([self.parse_boost(q) for q in self.boosts if q['limited']])+\
                   sum([self.bonuses[q]['f'](self) for q in self.bonuses if self.bonuses[q]['limited']])
         if self.get_value_cap() is not None:
             limited = min(limited, self.get_value_cap())
         return limited + \
-               sum([floor(q['boost'].value / q['cost']) for q in self.boosts if not q['limited']
+               sum([self.parse_boost(q) for q in self.boosts if not q['limited']
                     and not isinstance(q['boost'], self.BASE_RESOURCE)]) + \
                sum([self.bonuses[q]['f'](self) for q in self.bonuses if not self.bonuses[q]['limited']])
 
