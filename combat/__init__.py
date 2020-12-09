@@ -117,6 +117,11 @@ class MaximumMartialKnowledge(Attribute):  # martial arts give MK, oh fuck me
     BASE_RESOURCE = DevelopmentPoint
     DEFAULT_BASE_RESOURCE_COST = 5
 
+    def domine_detection_bonus(self):
+        def bonus_append(ca):
+            return self.value/2
+        return self.__class__, bonus_append
+
 
 class Combat(Module):
     def __init__(self, *args, **kwargs):

@@ -6,7 +6,7 @@ class Resource:
         self.__usage = None
         self.__value = value
 
-    def set_usage(self, usage):
+    def set_usage(self, usage, **kwargs):
         self.__usage = usage
 
     def set_value(self, value):

@@ -26,3 +26,6 @@ class FollowTheRules(CodeError):
 
 class MergedResource(CheekyHack):
     pass
+
+class NotAvailable(RuleError):
+    pass

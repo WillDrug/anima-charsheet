@@ -24,3 +24,6 @@ class Bonus(Resource):
 
 class BonusTracker(LocalLimitedPointTracker):
     pass
+
+class TertiaryPoint(Resource):
+    pass

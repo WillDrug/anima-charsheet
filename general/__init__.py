@@ -11,8 +11,7 @@ import traceback
 
 
 class GeneralConfig(ModuleConfig):
-    def __init__(self, LPM_cost, init_per_level, life_points_per_level, **kwargs):
-        self.LPM_cost = LPM_cost
+    def __init__(self, init_per_level, life_points_per_level, **kwargs):
         self.init_per_level = init_per_level
         self.LP_per_level = life_points_per_level
         super(GeneralConfig, self).__init__(**kwargs)
@@ -27,6 +26,10 @@ class Stat(Attribute, MultipartAttributeMixin):
     BASE_RESOURCE = StatPoint
     PHYSICAL = True
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.resource_f[StatPoint] = self.__parse_stat_point
+
     def get_value_cap(self):
         return self.DEFAULT_VALUE_CAP + (1 if self.PHYSICAL else 3)
 
@@ -39,31 +42,14 @@ class Stat(Attribute, MultipartAttributeMixin):
     def modifier(self):
         return (self.value - 5) * 5 if self.value >= 5 else -10 * (5 - self.value)  # kill me
 
-    def __stat_point_value(self):
+    def __parse_stat_point(self, boost):
         """
         This silly function is because point buy is WEEEEIRD
         :return:
         """
-        return sum(
-            [
-                q['boost'].value if q['boost'].value < 10 else floor(9 + ((q['boost'].value - 9) / 2))
-                for q in self.boosts if isinstance(q['boost'], StatPoint)
-            ]
-        )
+        return boost['boost'].value if boost['boost'].value < 10 else floor(9 + ((boost['boost'].value - 9) / 2))
 
-    @property
-    def value(self):
-        return min(self.base_value() +
-                   self.__stat_point_value() +
-                   sum([
-                       floor(q['boost'].value / q['cost']) for q in self.boosts
-                       if q['limited'] and not isinstance(q['boost'], self.BASE_RESOURCE)
-                   ]) +
-                   sum([self.bonuses[q]['f'](self) for q in self.bonuses if self.bonuses[q]['limited']]),
-                   self.get_value_cap()) + \
-               sum([floor(q['boost'].value / q['cost']) for q in self.boosts if not q['limited']]) + \
-               sum([self.bonuses[q]['f'](self) for q in self.bonuses if not self.bonuses[q]['limited']])
-
+    # todo: see if this can be refactored into :pass
     def boost(self, res: Resource, cost=None,
               limited=True):  # limited is VALUE LIMIT. COST limit always applies for base_resource
         if isinstance(res, self.BASE_RESOURCE):
@@ -91,10 +77,11 @@ class Stat(Attribute, MultipartAttributeMixin):
 
     def domine_bonus(self):
         def bonus_append(calling_attribute):
+            #print(f'{self.__class__}, {self.value}')
             if self.value < 11:
                 return self.value
             elif self.value < 20:
-                return (self.value-10)*2+self.value
+                return (self.value-10)*2+10
             else:
                 return (self.value-10)*3
 
@@ -135,7 +122,7 @@ class CON(Stat):
         def bonus_append(calling_attribute):
             if traceback.format_stack().__len__() > set(traceback.format_stack()).__len__():
                 return 0
-            return 10 * self.value + self.modifier
+            return 10 * self.value
 
         return self.__class__, bonus_append
 
@@ -246,6 +233,10 @@ class POW(Stat):
 
         return self.__class__, bonus_append
 
+    def zeon_bonus(self):
+        def bonus_append(mz):
+            return 10*self.value+self.modifier
+        return self.__class__.__name__, bonus_append
 
 class WIL(Stat):
     PHYSICAL = False
@@ -296,11 +287,6 @@ class PER(Stat):
 
 class MaximumLifePoints(Attribute):
     BASE_VALUE = 20
-
-    def __init__(self, LPM_cost):
-        self.LPM_cost = LPM_cost  # this can be and is used by bonuses
-        super().__init__()
-    #  LifePoints take no resources in and should be unboostable. Leaving the method open nonetheless.
 
 
 class Initiative(Attribute):  # fixme: separation of boint-buy and resource boosts are kinda dumb
@@ -576,9 +562,10 @@ class General(Module):
         self.stats = {k: Stat(k, self, base=StatPoint) for k in
                       Stat.impl_list()}  # fixme: possibly change to clear set attributes
 
-        self.maximum_life_points = MaximumLifePoints(self.config.LPM_cost)
+        self.maximum_life_points = MaximumLifePoints()
         self.maximum_life_points.add_bonus(self.config.__class__, lambda x: self.config.get_level() * self.config.LP_per_level)
         self.maximum_life_points.add_bonus(*self.stats.get('CON').health_bonus())
+        self.maximum_life_points.add_bonus(*self.stats.get('STR').mod_bonus())
 
         self.initiative = Initiative()
         self.initiative.add_bonus(self.config.__class__, lambda x: self.config.get_level() * self.config.init_per_level)

@@ -136,14 +136,14 @@ class Attribute(Base):
         super().check_sum_cost(update_value) # fixme doesn't work sometimes, might be best to declare in Base
 
     def boost(self, res: Resource, cost=None,
-              limited=True):  # limited is VALUE LIMIT. COST limit always applies for base_resource
+              limited=True, **kwargs):  # limited is VALUE LIMIT. COST limit always applies for base_resource
         if isinstance(res, self.BASE_RESOURCE):
             self.check_cost(res.value)
             if cost is None:
                 cost = self.get_base_resource_cost()  # fixme
         if cost is None:
             cost = 1
-        res.set_usage(f'Plus {res.value} to {self.__class__}')
+        res.set_usage(f'Plus {res.value} to {self.__class__}', **kwargs)
         self.boosts.append({'boost': res, 'limited': limited, 'cost': cost})
 
 

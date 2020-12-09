@@ -10,10 +10,10 @@ class Ability(Attribute):
         if presence_f is None or stat_dict is None:
             raise NotEnoughData('Please pass presence function and stat dict.')
         self.__pres_f = presence_f
-        self.__stat_dict = stat_dict
+        self._stat_dict = stat_dict
         super().__init__(*args, **kwargs)
 
     def base_value(self):
-        return self.__pres_f() + self.__stat_dict.get(self.STAT).modifier
+        return self.__pres_f() + self._stat_dict.get(self.STAT).modifier
 
 
