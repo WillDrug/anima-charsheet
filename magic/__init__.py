@@ -116,15 +116,15 @@ class Magic(Module):
         self.zeon_regeneration.ma_bonus = self.config.character.general.stats.get('POW').magic_accum_bonus()[1]
         self.innate_magic = InnateMagic()
         self.innate_magic.set_base_value_function(self.magic_accumulation.calculate_innate)
-        self.summon = Summon(presence_f=self.config.get_presence, base_res_cost=self.config.summon_cost,
+        self.summon = Summon(presence_f=lambda: 0, base_res_cost=self.config.summon_cost,
                              stat_dict=self.config.character.general.stats)
         self.summon.add_bonus(self, lambda x: self.config.summon_per_level*self.config.get_level())
-        self.control = Control(presence_f=self.config.get_presence, base_res_cost=self.config.control_cost,
+        self.control = Control(presence_f=lambda: 0, base_res_cost=self.config.control_cost,
                              stat_dict=self.config.character.general.stats)
         self.control.add_bonus(self, lambda x: self.config.control_per_level*self.config.get_level())
-        self.bind = Bind(presence_f=self.config.get_presence, base_res_cost=self.config.bind_cost,
+        self.bind = Bind(presence_f=lambda: 0, base_res_cost=self.config.bind_cost,
                              stat_dict=self.config.character.general.stats)
         self.bind.add_bonus(self, lambda x: self.config.bind_per_level*self.config.get_level())
-        self.banish = Banish(presence_f=self.config.get_presence, base_res_cost=self.config.banish_cost,
+        self.banish = Banish(presence_f=lambda: 0, base_res_cost=self.config.banish_cost,
                              stat_dict=self.config.character.general.stats)
         self.banish.add_bonus(self, lambda x: self.config.banish_per_level*self.config.get_level())
