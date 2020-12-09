@@ -34,6 +34,6 @@ class Psychic(Module):
                                             stat_dict=self.config.character.general.stats,
                                             base_res_cost=self.config.pproj_cost)
         self.maximum_psychic_points = MaximumPsychicPoints(base_res_cost=self.config.pp_cost)
-        self.maximum_psychic_points.add_bonus(self, lambda x: floor(self.config.pp_per_level*self.config.get_level()))
+        self.maximum_psychic_points.add_bonus(self, lambda x: 1+floor(self.config.pp_per_level*self.config.get_level()))
         self.maximum_psychic_points.add_bonus(*self.config.character.general.stats.get('INT').pp_bonus())
 

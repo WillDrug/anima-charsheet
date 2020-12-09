@@ -167,7 +167,7 @@ class INT(Stat):
 
     def pp_bonus(self):
         def bonus_append(mpp):
-            return self.value/5
+            return floor(self.modifier/5)
         return self.__class__, bonus_append
 
     def magic_level_bonus(self):

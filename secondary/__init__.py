@@ -23,6 +23,10 @@ class Skill(Ability):
     DEFAULT_BASE_RESOURCE_COST = 2
     MENTAL = None
 
+    @classmethod
+    def get_name(cls):
+        return cls.__name__ if not hasattr(cls, 'repname') else cls.repname
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.resource_f[InnateBonus] = self.parse_innate
@@ -32,7 +36,7 @@ class Skill(Ability):
 
     @classmethod
     def impl_list(cls) -> dict:
-        return {subcl.__name__ if not hasattr(subcl, 'repname') else subcl.repname: subcl for subcl in cls.__subclasses__()}
+        return {subcl.get_name(): subcl for subcl in cls.__subclasses__()}
 
     def base_value(self):
         append = 0
@@ -146,22 +150,26 @@ class DominionConcealment(Skill):
         return super().super().base_value()
 
 class Secondary(Module):
+    def get_value_cap(self, skillname):
+        def value_cap_calc():
+            return 40+floor(self.config.get_dp()/5)+(0 if skillname not in self.config.skill_per_level else 40)
+        return value_cap_calc
+
     def __init__(self, *args, **kwargs):
         # fixme cheeky hack?
         super().__init__(*args, **kwargs)
         self.innate_tracker = InnateBonusTracker(InnateBonus, limit_f=self.config.get_level)
-        self.bonus_tracker = BonusTracker(Bonus, limit_f=lambda: self.config.get_level()*5)
+        self.bonus_tracker = BonusTracker(Bonus, limit_f=lambda: self.config.get_level()*25)
         self.tertiary_tracker = ResourceTracker(TertiaryPoint, limit_f=lambda: (self.config.get_dp()/20)*(self.config.tertiary_pts/5))  # fixme just divide original values.
         self.skills = {}
         for k in Skill.impl_list():
             self.skills[k] = Skill.impl_list()[k](presence_f=self.config.get_presence,
                                                   stat_dict=self.config.character.general.stats,
-                                                  value_cap_f=lambda: 40+self.config.get_dp()*5+
-                                                                      (40 if self.__class__.__name__ in
-                                                                             self.config.skill_per_level
-                                                                       else 0))
+                                                  base_res_cost=self.config.skill_costs.get(k),
+                                                  value_cap_f=self.get_value_cap(k))
+
             if k in self.config.skill_per_level:
-                self.skills[k].add_bonus(self, lambda x: self.config.get_level()*self.config.skill_per_level[k])
+                self.skills[k].add_bonus(self, lambda x: self.config.get_level()*self.config.skill_per_level[x.__class__.get_name()])
             self.bonus_tracker.add_local_limit(k, limit_f=self.config.get_level)
         self.config.character.general.maximum_life_points.add_bonus(*self.get_skill('Withstand Pain').health_bonus())
 
@@ -185,18 +193,18 @@ class Secondary(Module):
         return attr.boost(tp)
 
     def boost_skill(self, skill, value):
-        attr = self.get_skill()
-        if isinstance(attr, Skill):
-            return self.boost_tertiary(attr, value)
-        else:
+        attr = self.get_skill(skill)
+        if attr.__class__.get_name() in Skill.impl_list():
             return self.boost(self.get_skill(skill), value)
+        else:
+            return self.boost_tertiary(attr, value)
 
     def boost_with_innate(self, skill, value=1):
         attr = self.get_skill(skill)
         innate = self.innate_tracker.emit_resource(value)
-        return attr.boost(innate, mental=attr.MENTAL)
+        return attr.boost(innate, mental=attr.MENTAL, cost=1)
 
     def boost_with_bonus(self, skill, value=5):
         attr = self.get_skill(skill)
         boost = self.bonus_tracker.emit_resource(value, attr)
-        attr.boost(boost)
+        attr.boost(boost, cost=1)
