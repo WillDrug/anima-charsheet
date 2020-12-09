@@ -128,3 +128,4 @@ class Magic(Module):
         self.banish = Banish(presence_f=lambda: 0, base_res_cost=self.config.banish_cost,
                              stat_dict=self.config.character.general.stats)
         self.banish.add_bonus(self, lambda x: self.config.banish_per_level*self.config.get_level())
+        # todo: add magic buying here? or...

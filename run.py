@@ -42,6 +42,3 @@ char.secondary.boost_with_bonus('Withstand Pain', 25)
 char.secondary.boost_with_bonus('Alchemy', 40)
 
 print(char.secondary.get_skill('Magic Appraisal').value)
-print(char.secondary.get_skill('Magic Appraisal').base_value())
-print([(q['boost'].value, q['cost']) for q in char.secondary.get_skill('Magic Appraisal').boosts])
-print([q[1]['f'](char.secondary.get_skill('Magic Appraisal')) for q in char.secondary.get_skill('Magic Appraisal').bonuses.items()])
