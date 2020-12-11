@@ -1,6 +1,6 @@
 from util.config import ModuleConfig, Module
-from util.parameters import MultipartAttributeMixin, ChoiceAttributeMixin
-from util.abilities import Ability, Attribute
+from util.parameters import MultipartAttributeMixin, ChoiceAttributeMixin, Ability
+from util.parameters import Attribute
 from util.exceptions import OverLimit, Panik
 from math import floor
 from common.resources import DevelopmentPoint

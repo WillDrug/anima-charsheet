@@ -1,7 +1,6 @@
 from util.exceptions import NotFound, NotAvailable
 from util.config import ModuleConfig, Module
-from util.parameters import MultipartAttributeMixin
-from util.abilities import Ability
+from util.parameters import MultipartAttributeMixin, Ability
 from .resources import InnateBonusTracker, InnateBonus, Bonus, BonusTracker, TertiaryPoint, ResourceTracker
 from math import floor
 

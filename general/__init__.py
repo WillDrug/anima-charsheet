@@ -1,9 +1,8 @@
 
 from util.exceptions import NotFound, NotEnoughData, Panik, OverLimit, MergedResource
 from util.resources import Resource, ResourceTracker
-from util.parameters import Attribute, MultipartAttributeMixin, ChoiceAttributeMixin
+from util.parameters import Attribute, MultipartAttributeMixin, ChoiceAttributeMixin, Ability
 from util.config import ModuleConfig, Module
-from util.abilities import Ability
 from common.resources import CreationPoint, CreationPointTracker
 from .resources import StatPoint
 from math import floor, inf
@@ -21,6 +20,8 @@ class Stat(Attribute, MultipartAttributeMixin):
     INSTANCE_LIST = {}  # important!
     # 11 physical 13 mental WOW MENTAL
     DEFAULT_VALUE_CAP = 10  # fixme
+    P_BOOST = 1
+    M_BOOST = 3
     DEFAULT_BASE_RESOURCE_CAP = 11
     DEFAULT_SUM_BASE_RESOURCE_CAP = 65  # this is redundant
     BASE_RESOURCE = StatPoint
@@ -31,7 +32,7 @@ class Stat(Attribute, MultipartAttributeMixin):
         self.resource_f[StatPoint] = self.__parse_stat_point
 
     def get_value_cap(self):
-        return self.DEFAULT_VALUE_CAP + (1 if self.PHYSICAL else 3)
+        return self.DEFAULT_VALUE_CAP + (self.P_BOOST if self.PHYSICAL else self.M_BOOST)
 
     # todo: limit inhuman\zen to appropriate caps depending on mental\physical
     @property

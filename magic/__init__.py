@@ -1,6 +1,5 @@
 from util.config import ModuleConfig, Module
-from util.parameters import Attribute
-from util.abilities import Ability
+from util.parameters import Attribute, Ability
 from common.resources import DevelopmentPoint
 from general import POW
 from math import floor
