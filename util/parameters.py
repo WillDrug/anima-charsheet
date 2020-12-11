@@ -1,5 +1,5 @@
 from weakref import WeakSet
-from .exceptions import NotEnoughData, NotFound, OverLimit, FollowTheRules
+from .exceptions import NotEnoughData, NotFound, OverLimit
 from .resources import Resource
 from math import floor
 import traceback

@@ -21,11 +21,14 @@ class OverLimit(RuleError):
 class Panik(CodeError):
     pass
 
-class FollowTheRules(CodeError):
-    pass
-
 class MergedResource(CheekyHack):
     pass
 
 class NotAvailable(RuleError):
+    pass
+
+class NotAllowed(RuleError):
+    pass
+
+class NotCompatible(RuleError):
     pass
