@@ -152,3 +152,14 @@ class Combat(Module):
             self.accumulations[k].add_bonus(*self.config.character.general.stats.get(k).domine_accum_bonus())
         self.maximum_martial_knowledge = MaximumMartialKnowledge(base_lim_f=lambda: floor(self.config.get_dp()/10))
         self.maximum_martial_knowledge.add_bonus(self, lambda x: self.config.get_level()*self.config.mk_per_level)
+        self.combat_profiles = {}
+
+    # todo add buy bonuses\penalties for profiles
+    def get_profile(self, pclass):
+        if pclass in self.combat_profiles:
+            return self.combat_profiles[pclass]
+        else:
+            return pclass(self.config.character.general.stats)
+
+    def set_profile(self, pclass, pinstance):
+        self.combat_profiles[pclass] = pinstance

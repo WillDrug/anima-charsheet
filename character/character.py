@@ -61,9 +61,9 @@ class Character:
         self.psychic = Psychic(PsychicConfig(*self.psychic_config, dp_limit=self.psychic_dp_limit,
                                              dp_tracker=self.dp_tracker, character=self))
         self.secondary = Secondary(SecondaryConfig(*self.secondary_config, dp_tracker=self.dp_tracker, character=self))
-        # buyables
-        # fluff
-        self.notes = []
+
+        # core ended, starting ext
+
 
     base_limit = 280
 

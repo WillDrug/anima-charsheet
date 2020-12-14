@@ -2,6 +2,7 @@ import inspect
 from functools import wraps
 from .exceptions import OverLimit, NotAllowed, NotCompatible
 from weakref import WeakSet
+from util.time import TimeUnit
 
 def process_track_change(f):
     @wraps(f)
@@ -24,7 +25,7 @@ class Tracked:
         if self.value != 0:
             self.revert()
 
-    def use(self, value):
+    def use(self, value=1):
         if value > self.value:
             raise OverLimit(f'This {self.__class__} does not have {value} in it. Maximum is {self.value}')
         self.value -= value
@@ -49,18 +50,24 @@ class Tracked:
 
 class Tracker:
     pts = Tracked
-    def __init__(self, max_value_f, min_value_f, character, emit_limit=None):
+    RESTORE_EACH = TimeUnit.ROUND
+    RESTORE_EMIT_EACH = TimeUnit.ROUND
+
+    def __init__(self, max_value_f, character, min_value_f=None, emit_limit={}):
         self.get_maximum = max_value_f
         self.value = max_value_f()
+        if min_value_f is None:
+            min_value_f = lambda: 0
         self.get_minimum = min_value_f
         self.character = character
         self.reserved = WeakSet()
-        if emit_limit is not None:
-            self.__get_emit_limit = emit_limit
-            self.emit_limit = emit_limit()
+        self.__emit_limit_f = emit_limit
+        self.emit_limit = {}
+        for k in emit_limit:
+            self.emit_limit[k] = emit_limit[k]()
 
     def __get_emit_limit(self):
-        raise NotImplementedError()
+        return self.__emit_limit_f
 
     def get_reserved(self):
         return sum([q.value for q in self.reserved])
@@ -68,15 +75,41 @@ class Tracker:
     def free(self, pts):
         self.reserved.remove(pts)  # this can raise a ValueError, shouldn't if all is tracked okay
 
-    def emit(self, value) -> Tracked:
+    def emit(self, value, pts: None) -> Tracked:
         if self.value - value < self.get_minimum():
             raise OverLimit(f'You don\'t have {value} {self.pts.__class__} to give :(')
+        if pts is not None:
+            if pts in self.__get_emit_limit():
+                if self.emit_limit[pts] < value:
+                    raise OverLimit(f'You can\'t emit more than {self.__get_emit_limit()[pts]()} '
+                                    f'{pts} per {self.RESTORE_EACH}')
+                self.emit_limit[pts] -= value
         pts = self.pts(value, self)
         self.reserved.add(pts)
         return pts
 
+    def get_restore(self):
+        return self.get_maximum()
+
+    def get_emit_restore(self):
+        return self.__get_emit_limit()
+
+    def tick(self):
+        self.change_value(self.get_restore())
+
+    def tick_emit(self):
+        for k in self.emit_limit:
+            self.emit_limit[k] = self.get_emit_restore()[k]()
+        return
+
+    def get_tick(self):
+        return self.tick, self.RESTORE_EACH
+
+    def get_tick_emit(self):
+        return self.tick_emit, self.RESTORE_EMIT_EACH
+
     def gain(self, pts):
-        if not isinstance(pts, self.pts):
+        if not isinstance(pts, self.pts) and not issubclass(pts.__class__, self.pts):
             raise NotCompatible(f'{pts.__class__} can\'t be used to replenish {self.pts}')
         pts.use()
         self.change_value(pts.value)

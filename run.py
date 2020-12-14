@@ -6,6 +6,8 @@ from inspect import getmro
 from util.exceptions import OverLimit
 from util.resources import Resource, ResourceTracker
 from common.resources import DevelopmentPoint
+from character.controller import Controller
+from combat.profiles import Unarmed
 
 char = Character('Wizard', dp=800)
 char.general.invest_into_stats(dict(STR=5, DEX=5, AGI=8, CON=8, INT=11, POW=11, WIL=6, PER=11))
@@ -41,4 +43,6 @@ char.secondary.boost_with_bonus('Occult', 5)
 char.secondary.boost_with_bonus('Withstand Pain', 25)
 char.secondary.boost_with_bonus('Alchemy', 40)
 
-print(char.secondary.get_skill('Magic Appraisal').value)
+controller = Controller(char)
+print(controller.attack_action(Unarmed))
+controller.tick()

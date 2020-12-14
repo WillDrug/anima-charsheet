@@ -44,7 +44,6 @@ class Skill(Ability):
         return append + super().base_value()
 
 
-
 class Acrobatics(Skill):
     STAT = 'AGI'
     MENTAL = False
