@@ -16,7 +16,7 @@ class Regeneration(Buyable):
         def bonus_append(regen):
             return self.invest[CreationPoint].value*2
 
-        return self.__class, bonus_append
+        return self.__class__, bonus_append
 
     def add_bonuses(self):
         self.character.general.regen.add_bonus()
