@@ -1,7 +1,23 @@
-
+from .tracked import Tracker
+from .exceptions import NotCompatible
 
 class Activatable:
-    pass
+    active = False
+
+    def __init__(self, character):
+        self.character = character
+
+    def use(self):
+        pass
+
+    def activate(self):
+        self.active = True
+
+    def deactivate(self):
+        self.active = False
+
+    def maintain(self):
+        pass
 
 # todo from common import tracker, USES = (Tracker type)
 # todo ACTIONS = 0 to identify physical action taking place

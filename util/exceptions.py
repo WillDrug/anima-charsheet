@@ -32,3 +32,9 @@ class NotAllowed(RuleError):
 
 class NotCompatible(RuleError):
     pass
+
+class PrerequisiteError(RuleError):
+    pass
+
+class NotEnough(RuleError):
+    pass

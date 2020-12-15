@@ -63,6 +63,9 @@ class Character:
         self.secondary = Secondary(SecondaryConfig(*self.secondary_config, dp_tracker=self.dp_tracker, character=self))
 
         # core ended, starting ext
+        self.notes = set()
+        self.activatables = set()
+        self.reference = set()
 
 
     base_limit = 280
