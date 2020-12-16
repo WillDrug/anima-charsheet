@@ -2,12 +2,14 @@ from util.resources import Resource
 from util.exceptions import NotEnoughData, PrerequisiteError, NotEnough
 from util.activatable import Activatable
 
+
 class Note:
     def __init__(self, text):
         self.text = text
 
     def __str__(self):
         return self.text
+
 
 class Buyable:
     REFERENCE = 'GENERIC'
@@ -33,6 +35,32 @@ class Buyable:
         self.character = character
         self.activate()
 
+    def set_usage(self, res):
+        res.set_usage(f'Buying {self.__class__}')
+
+    def deactivate(self):
+        self.rem_bonuses()
+        self.rem_notes()
+        self.rem_activatables()
+        self.rem_reference()
+        for k in self.invest:
+            self.invest[k].free()
+
+    def rem_bonuses(self):
+        pass
+
+    def rem_notes(self):
+        try:
+            self.character.notes.remove(self.NOTE)
+        except KeyError:
+            pass
+
+    def rem_activatables(self):
+        pass
+
+    def rem_reference(self):
+        self.character.reference.remove(self.REFERENCE)
+
     def activate(self):
         self.add_bonuses()
         self.add_notes()
@@ -46,8 +74,9 @@ class Buyable:
         self.character.notes.add(self.NOTE)
 
     def add_activatables(self):
-        self.activatable = Activatable(character=self.character)
-        self.character.activatables.add(self.activatable)
+        pass
+        # self.activatable = Activatable(character=self.character)
+        # self.character.activatables.add(self.activatable)
 
     def add_reference(self):
         self.character.reference.add(self.REFERENCE)

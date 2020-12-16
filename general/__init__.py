@@ -52,7 +52,7 @@ class Stat(Attribute, MultipartAttributeMixin):
 
     # todo: see if this can be refactored into :pass
     def boost(self, res: Resource, cost=None,
-              limited=True):  # limited is VALUE LIMIT. COST limit always applies for base_resource
+              limited=True, **kwargs):  # limited is VALUE LIMIT. COST limit always applies for base_resource
         if isinstance(res, self.BASE_RESOURCE):
             self.check_cost(res.value)
             if any([isinstance(q, self.BASE_RESOURCE) for q in self.boosts]):
@@ -597,6 +597,7 @@ class General(Module):
 
         self.resistance = Resistance(presence_f=lambda: self.config.get_presence()*2, stat_dict=self.stats)
         self.resistance.add_bonus(self, lambda x: 0 if not x.GNOSIS else floor(self.config.get_gnosis()/5)*40)
+        self.advantages = dict()
 
     @property
     def stat_costs(self):
@@ -631,6 +632,18 @@ class General(Module):
         except Exception as e:  # fixme: wide exception net, poor Resource tracking
             self.cp_tracker.free_resource(cp)
             raise e
+
+    def get_advantage(self, advantage_cls, value):
+        prev = self.advantages.get(advantage_cls)
+        if prev is not None:
+            prev.deactivate()
+        cp = self.cp_tracker.emit_resource(value=value)
+        try:
+            self.advantages[advantage_cls] = advantage_cls(self.config.character, **{CreationPoint.__name__: cp})
+        except Exception as e:
+            self.cp_tracker.free_resource(cp)
+            raise e
+
 
 
 if __name__ == '__main__':

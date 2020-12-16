@@ -5,6 +5,7 @@ class Resource:
     def __init__(self, value=1):
         self.__usage = None
         self.__value = value
+        self.delete = False
 
     def set_usage(self, usage, **kwargs):
         self.__usage = usage
@@ -19,6 +20,10 @@ class Resource:
     @property
     def value(self):
         return self.__value
+
+    def free(self):
+        self.__usage = None
+        self.delete = True
 
 
 class ResourceTracker:
@@ -61,11 +66,19 @@ class ResourceTracker:
         self.track[idx].set_value(value)
 
     def get_total(self):
-        return sum([q.value for q in self.track])
+        sm = 0
+        for q in self.track:
+            if q.delete:
+                self.free_resource(q)
+            sm += q.value
+        return sm
 
 
 class IterativePointTracker(ResourceTracker):
     def get_total(self, only_one=False, only_two=False):
+        for q in self.track:
+            if q.delete:
+                self.free_resource(q)
         if only_one == only_two:
             return super().get_total()
         if only_one:
