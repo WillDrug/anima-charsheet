@@ -131,10 +131,6 @@ class DominionDetection(Skill):
     DEFAULT_BASE_RESOURCE_CAP = 0
     ACTIVATED = False
 
-    def base_value(self):
-        if not self.ACTIVATED:
-            raise NotAvailable(f'This character cannot detect Ki')
-        return super(Skill, self).base_value()
 
 class DominionConcealment(Skill):
     repname = 'Dominion Concealment'
@@ -142,10 +138,7 @@ class DominionConcealment(Skill):
     DEFAULT_BASE_RESOURCE_CAP = 0
     ACTIVATED = False
 
-    def base_value(self):
-        if not self.ACTIVATED:
-            raise NotAvailable(f'This character cannot conceal Ki')
-        return super().super().base_value()
+
 
 class Secondary(Module):
     def get_value_cap(self, skillname):

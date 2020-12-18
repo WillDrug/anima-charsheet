@@ -1,5 +1,5 @@
 from weakref import WeakSet
-from .exceptions import NotEnoughData, NotFound, OverLimit
+from .exceptions import NotEnoughData, NotFound, OverLimit, NotAllowed
 from .resources import Resource
 from math import floor
 import traceback
@@ -212,7 +212,9 @@ class ChoiceAttributeMixin(Base):
 
 
 class Ability(Attribute):
+    ACTIVATED = True
     STAT = None
+
     def __init__(self, *args, presence_f=None, stat_dict=None, **kwargs):
         kwargs['presence_f'] = presence_f
         kwargs['stat_dict'] = stat_dict  # this is done not to lose 'em
@@ -223,4 +225,6 @@ class Ability(Attribute):
         super().__init__(*args, **kwargs)
 
     def base_value(self):
+        if not self.ACTIVATED:
+            raise NotAllowed(f'Character does not have access to {self.__class__}')
         return self.__pres_f() + self._stat_dict.get(self.STAT).modifier

@@ -4,8 +4,9 @@ from .exceptions import NotCompatible
 class Activatable:
     active = False
 
-    def __init__(self, character):
+    def __init__(self, character=None, buyable=None):
         self.character = character
+        self.buyable = buyable
 
     def use(self):
         pass

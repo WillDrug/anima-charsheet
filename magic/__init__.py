@@ -24,15 +24,20 @@ class MagicConfig(ModuleConfig):
 
 class MagicAccumulation(Attribute):
     BASE_RESOURCE = DevelopmentPoint
+    ACTIVATED = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.resource_f[DevelopmentPoint] = self.calculate_multiples
 
     def calculate_multiples(self, boost):
+        if not self.ACTIVATED:
+            return 0
         return floor(boost['boost'].value/boost['cost'])*self.bonuses.get(POW)['f'](self)
 
     def calculate_innate(self):
+        if not self.ACTIVATED:
+            return 0
         if self.value < 55:
             return 10
         elif self.value < 75:
@@ -55,6 +60,7 @@ class MagicAccumulation(Attribute):
 class MagicProjection(Ability):
     BASE_RESOURCE = DevelopmentPoint
     STAT = 'PER'
+    ACTIVATED = False
 
 class MagicLevel(Attribute):
     BASE_RESOURCE = DevelopmentPoint
