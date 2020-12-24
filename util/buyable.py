@@ -21,6 +21,7 @@ class Buyable:
     PREREQUISITE = []
 
     def __init__(self, character, **kwargs):
+        self.character = character
         self.invest = {}
         for k in self.COST:
             res = kwargs.get(k.__name__)
@@ -32,7 +33,6 @@ class Buyable:
         for pre in self.PREREQUISITE:
             if pre not in self.character.reference:
                 raise PrerequisiteError(f'{self.__class__} requires {pre} referencing buyable first')
-        self.character = character
         self.activate()
 
     def set_usage(self, res):

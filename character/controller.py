@@ -6,9 +6,11 @@ from combat.options import CombatOption
 from .actions import PhysicalAction, CombatAction, MagicAction, PsyAction
 from combat import Light
 from util.tracked import Tracker
-from util.exceptions import NotCompatible
+from util.exceptions import NotCompatible, NotAllowed
 from secondary import Skill
 
+def roll_d100():
+    return 0
 
 class Controller:
     def __init__(self, character: Character):
@@ -36,8 +38,14 @@ class Controller:
 
     # actions
     def reset_actions(self):
+        if self.__combat_action is not None:
+            self.__combat_action.use()
         self.__combat_action = None
+        if self.__magic_action is not None:
+            self.__magic_action.use()
         self.__magic_action = None
+        if self.__psy_action is not None:
+            self.__psy_action.use()
         self.__psy_action = None
 
     # todo ROLLZ
@@ -48,6 +56,8 @@ class Controller:
         self.__combat_action.executed = 0
 
     def attack_action(self, profile: type, attack_type: type = Light, special: CombatOption = None, roll=None):
+        if roll is None:
+            roll = roll_d100()
         if self.__combat_action is None:
             self.combat_action()
         profile = self.character.combat.get_profile(profile)
@@ -59,7 +69,7 @@ class Controller:
         if special is not None:
             penalty += special.PENALTY
         try:
-            return min(getattr(self.character.combat.attack, attack_type.__name__.lower()).value - penalty,
+            return min(getattr(self.character.combat.attack, attack_type.__name__.lower()).value - penalty + roll,
                        self.character.get_limit()), special
         finally:
             if self.__combat_action.executed >= self.__combat_action.split:
@@ -67,13 +77,19 @@ class Controller:
             else:
                 self.__combat_action.executed += 1
 
-    def magic_action(self):
+    def start_magic_action(self):
         self.reset_actions()
         self.__magic_action = self.action_tracker.emit(1, MagicAction)
+
+    def end_magic_action(self):
         self.__magic_action.use()  # fixme when should it be used?
 
     def cast_spell(self, roll=None):  # todo: takes spell to cast, checks zeon trackers and shit.
-        pass
+        if self.__magic_action is None:
+            raise NotAllowed('You need to initiate MAGICS first')
+        if roll is None:
+            roll = roll_d100()
+        return min(self.character.magic.magic_projection.value + roll, self.character.get_limit())
 
     def psionic_action(self):
         self.reset_actions()

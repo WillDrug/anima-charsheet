@@ -27,3 +27,29 @@ class Regeneration(Advantage):
 
     def rem_bonuses(self):
         self.character.general.regen.rem_bonus(self.__class__)
+
+
+class IncompleteGift(Advantage):
+    COST = {
+        CreationPoint: 1
+    }
+    REFERENCE = 'adv_lim_gift'
+    PREREQUISITE = []
+    NOTE = 'Able to accumulate and control Zeon but not so much cast'
+
+    def add_bonuses(self):
+        self.character.magic.magic_accumulation.ACTIVATED = True
+        self.character.magic.magic_projection.ACTIVATED = True
+
+
+    def rem_bonuses(self):
+        self.character.magic.magic_accumulation.ACTIVATED = False
+        self.character.magic.magic_projection.ACTIVATED = False
+
+class Gift(Advantage):
+    COST = {
+        CreationPoint: 1
+    }
+    REFERENCE = 'adv_gift'
+    PREREQUISITE = ['adv_lim_gift']
+    NOTE = 'Ability to perform Magic'

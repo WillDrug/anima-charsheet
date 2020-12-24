@@ -8,7 +8,7 @@ from util.resources import Resource, ResourceTracker
 from common.resources import DevelopmentPoint
 from character.controller import Controller
 from combat.profiles import Unarmed
-from general.advantages import Regeneration
+from general.advantages import Gift, IncompleteGift
 
 char = Character('Wizard', dp=800)
 char.general.invest_into_stats(dict(STR=5, DEX=5, AGI=8, CON=8, INT=11, POW=11, WIL=6, PER=11))
@@ -44,13 +44,11 @@ char.secondary.boost_with_bonus('Occult', 5)
 char.secondary.boost_with_bonus('Withstand Pain', 25)
 char.secondary.boost_with_bonus('Alchemy', 40)
 
-print(char.general.regen.value)
-print(char.general.cp_tracker.get_total(), '/', char.general.cp_tracker.get_limit())
-char.general.get_advantage(Regeneration, 1)
-print(char.general.regen.value)
-print(char.general.cp_tracker.get_total(), '/', char.general.cp_tracker.get_limit())
-char.general.get_advantage(Regeneration, 2)
-print(char.general.regen.value)
-print(char.general.cp_tracker.get_total(), '/', char.general.cp_tracker.get_limit())
+
+
+char.general.get_advantage(IncompleteGift, 1)
+char.general.get_advantage(Gift, 1)
 
 controller = Controller(char)
+print(controller.magic_action())
+
