@@ -91,7 +91,7 @@ class Controller:
             roll = roll_d100()
         return min(self.character.magic.magic_projection.value + roll, self.character.get_limit())
 
-    def psionic_action(self):
+    def psionic_action(self):  # add PP tracker with 1 per hour recovery
         self.reset_actions()
         self.__psy_action = self.action_tracker.emit(1, PsyAction)
 
