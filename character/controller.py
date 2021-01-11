@@ -1,7 +1,7 @@
 from .character import Character
 from util.items import Item
 from util.time import TimeUnit, TimeTracker
-from combat.profiles import CombatProfile
+from combat.profiles import CombatProfile, Unarmed
 from combat.options import CombatOption
 from .actions import PhysicalAction, CombatAction, MagicAction, PsyAction
 from combat import Light
@@ -25,6 +25,10 @@ class Controller:
                 MagicAction: lambda: 1,
                 PsyAction: lambda: 1
             })
+
+        self.main_hand_profile = Unarmed
+        self.offhand_profile = Unarmed
+
         self.time.track(*self.action_tracker.get_tick())
         self.time.track(*self.action_tracker.get_tick_emit())
         self.time.track(self.reset_actions, TimeUnit.ROUND)
@@ -55,13 +59,18 @@ class Controller:
         self.__combat_action.split = split
         self.__combat_action.executed = 0
 
-    def attack_action(self, profile: type, attack_type: type = Light, special: CombatOption = None, roll=None):
+    def attack_action(self, main_hand=True, attack_type: type = Light, special: CombatOption = None, roll=None):
         if roll is None:
             roll = roll_d100()
         if self.__combat_action is None:
             self.combat_action()
-        profile = self.character.combat.get_profile(profile)
-        penalty = profile.PENALTY
+        penalty = 0
+        if main_hand:
+            profile = self.character.combat.get_profile(self.main_hand_profile)
+        else:
+            profile = self.character.combat.get_profile(self.offhand_profile)
+            penalty += self.character.combat.offhand_penalty.value
+        penalty += profile.PENALTY
         if attack_type not in profile.ATTACK_OPTIONS:
             raise NotCompatible(f'{profile} does not allow for a {attack_type} attack')
         if self.__combat_action.split > 0:

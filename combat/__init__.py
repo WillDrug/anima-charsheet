@@ -122,6 +122,8 @@ class MaximumMartialKnowledge(Attribute):  # martial arts give MK, oh fuck me
             return self.value/2
         return self.__class__, bonus_append
 
+class OffhandPenalty(Attribute):
+    BASE_VALUE = 40
 
 class Combat(Module):
     def __init__(self, *args, **kwargs):
@@ -152,6 +154,7 @@ class Combat(Module):
             self.accumulations[k].add_bonus(*self.config.character.general.stats.get(k).domine_accum_bonus())
         self.maximum_martial_knowledge = MaximumMartialKnowledge(base_lim_f=lambda: floor(self.config.get_dp()/10))
         self.maximum_martial_knowledge.add_bonus(self, lambda x: self.config.get_level()*self.config.mk_per_level)
+        self.offhand_penalty = OffhandPenalty()
         self.combat_profiles = {}
 
     # todo add buy bonuses\penalties for profiles

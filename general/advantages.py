@@ -36,6 +36,7 @@ class IncompleteGift(Advantage):
     REFERENCE = 'adv_lim_gift'
     PREREQUISITE = []
     NOTE = 'Able to accumulate and control Zeon but not so much cast'
+    # fixme: this should work with casting limited to a power roll
 
     def add_bonuses(self):
         self.character.magic.magic_accumulation.ACTIVATED = True
@@ -47,9 +48,31 @@ class IncompleteGift(Advantage):
         self.character.magic.magic_projection.ACTIVATED = False
 
 class Gift(Advantage):
+    # fixme: doesn't do anything yet. should remove casting restrictions
     COST = {
         CreationPoint: 1
     }
     REFERENCE = 'adv_gift'
     PREREQUISITE = ['adv_lim_gift']
     NOTE = 'Ability to perform Magic'
+
+class Ambidextrous(Advantage):
+    COST = {
+        CreationPoint: 1
+    }
+    REFERECE = 'adv_ambidextrous'
+    NOTE = 'Skilled with using both hands'
+
+    def add_bonuses(self):
+        self.character.combat.offhand_penalty.add_bonus(self.__class__, lambda x: -30)
+
+    def rem_bonuses(self):
+        self.character.combat.offhand_penalty.rem_bonus(self.__class__)
+
+
+
+class PsychicDiscipline(Advantage):
+    pass
+
+class AnyPsychicDiscipline(Advantage):
+    pass
