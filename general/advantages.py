@@ -72,7 +72,30 @@ class Ambidextrous(Advantage):
 
 
 class PsychicDiscipline(Advantage):
-    pass
+    COST = {
+        CreationPoint: 1
+    }
+
+class Telepathy(PsychicDiscipline):
+    REFERENCE = 'adv_psy_telepathy'
 
 class AnyPsychicDiscipline(Advantage):
-    pass
+    COST = {
+        CreationPoint: 2
+    }
+    REFERENCE = 'adv_psy_all'
+
+    def __init__(self):
+        self.cps = {}
+
+    def add_bonuses(self):
+        for sub in PsychicDiscipline.__subclasses__():
+            cp = CreationPoint(lock_advantage=True)
+            adv = sub(self.character, **{CreationPoint.__name__: cp})
+            self.cps[cp] = adv
+
+    def rem_bonuses(self):
+        for k in self.cps:
+            self.cps[k].deactivate()
+            k.free()
+            del self.cps[k]

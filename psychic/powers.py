@@ -14,6 +14,7 @@ class Power(Buyable):
 
 class Telepathy(Buyable):
     REFERENCE = 'psy_t_telepathy'
+    PREREQUISITE = ['adv_psy_telepathy']
     NOTE = 'Has access to Telepathy psychic discipline'
     COST = {
         PsychicPoint: 1

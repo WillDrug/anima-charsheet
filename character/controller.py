@@ -81,10 +81,11 @@ class Controller:
             return min(getattr(self.character.combat.attack, attack_type.__name__.lower()).value - penalty + roll,
                        self.character.get_limit()), special
         finally:
-            if self.__combat_action.executed >= self.__combat_action.split:
-                self.__combat_action.use()
-            else:
-                self.__combat_action.executed += 1
+            if not main_hand:
+                if self.__combat_action.executed >= self.__combat_action.split:
+                    self.__combat_action.use()
+                else:
+                    self.__combat_action.executed += 1
 
     def start_magic_action(self):
         self.reset_actions()
