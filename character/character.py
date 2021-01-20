@@ -7,6 +7,17 @@ from common.resources import DevelopmentPoint, DevelopmentPointTracker
 from general import General, GeneralConfig
 
 class Character:
+    SURPRISE = True
+    SURPRISE_DIFF = 150
+
+    def is_surprised(self, dice_diff, gm_declared=False):
+        if gm_declared:
+            return self.SURPRISE
+        if dice_diff >= self.SURPRISE_DIFF:
+            return True
+        else:
+            return False
+
     @classmethod
     def __new__(cls, *args, **kwargs):
         """ Forces creation of an implementation on each Interface call

@@ -99,3 +99,26 @@ class AnyPsychicDiscipline(Advantage):
             self.cps[k].deactivate()
             k.free()
             del self.cps[k]
+
+class DangerSense(Advantage):
+    COST = {
+        CreationPoint: 1
+    }
+    REFERENCE = 'adv_dng_sns'
+
+    def add_bonuses(self):
+        self.character.SURPRISE = False
+
+    def rem_bonuses(self):
+        self.character.SURPRISE = True
+
+class Aptitude(Advantage):
+    COST = {
+        CreationPoint: 1
+    }
+
+class AptitudeInAcrobatics(Aptitude):
+    REFERENCE = 'acroapt'
+
+    def add_bonuses(self):
+        pass
