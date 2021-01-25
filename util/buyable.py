@@ -26,7 +26,7 @@ class Buyable:
         for k in self.COST:
             res = kwargs.get(k.__name__)
             if res is None:
-                raise NotEnoughData(f'There needs to be {self.COST[k]} {self.COST[k]} to buy {self.__class__}')
+                raise NotEnoughData(f'There needs to be {self.COST[k]} {k} to buy {self.__class__}')
             if res.value < self.COST[k]:
                 raise NotEnough(f'{self.__class__} takes at least {self.COST[k]} of {k}.')
             self.invest[k] = res

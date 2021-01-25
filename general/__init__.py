@@ -633,13 +633,14 @@ class General(Module):
             self.cp_tracker.free_resource(cp)
             raise e
 
-    def get_advantage(self, advantage_cls, value):
+    def get_advantage(self, advantage_cls, value, extdata={}):
         prev = self.advantages.get(advantage_cls)
         if prev is not None:
             prev.deactivate()
         cp = self.cp_tracker.emit_resource(value=value)
         try:
-            self.advantages[advantage_cls] = advantage_cls(self.config.character, **{CreationPoint.__name__: cp})
+            adv = advantage_cls(self.config.character, **{CreationPoint.__name__: cp}, **extdata)
+            self.advantages[adv.get_ref()] = adv
         except Exception as e:
             self.cp_tracker.free_resource(cp)
             raise e

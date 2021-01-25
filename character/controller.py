@@ -42,22 +42,25 @@ class Controller:
 
     # actions
     def reset_actions(self):
-        if self.__combat_action is not None:
+        if hasattr(self, '__combat_action') and self.__combat_action is not None:
             self.__combat_action.use()
         self.__combat_action = None
-        if self.__magic_action is not None:
+        if hasattr(self, '__magic_action') and self.__magic_action is not None:
             self.__magic_action.use()
         self.__magic_action = None
-        if self.__psy_action is not None:
+        if hasattr(self, '__psy_action') and self.__psy_action is not None:
             self.__psy_action.use()
         self.__psy_action = None
 
     # todo ROLLZ
-    def combat_action(self, split=0):
+    def start_combat_action(self, split=0):
         self.reset_actions()
         self.__combat_action = self.action_tracker.emit(1, CombatAction)
         self.__combat_action.split = split
         self.__combat_action.executed = 0
+
+    def end_combat_action(self):
+        self.__combat_action.use()
 
     def attack_action(self, main_hand=True, attack_type: type = Light, special: CombatOption = None, roll=None):
         if roll is None:

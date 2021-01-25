@@ -14,6 +14,7 @@ def process_track_change(f):
 
     return wrapper
 
+import traceback
 
 class Tracked:
     def __init__(self, value, tracker):

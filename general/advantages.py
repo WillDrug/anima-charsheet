@@ -1,7 +1,12 @@
 from util.buyable import Buyable
 from common.resources import CreationPoint
+from types import MethodType
+from util.exceptions import NotEnoughData
 
 class Advantage(Buyable):
+    def get_ref(self):
+        return self.__class__.__name__
+
     def set_usage(self, res):
         res.set_usage(f'Buying {self.__class__}', stat=False)
 
@@ -85,8 +90,9 @@ class AnyPsychicDiscipline(Advantage):
     }
     REFERENCE = 'adv_psy_all'
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.cps = {}
+        super().__init__(*args, **kwargs)
 
     def add_bonuses(self):
         for sub in PsychicDiscipline.__subclasses__():
@@ -116,9 +122,62 @@ class Aptitude(Advantage):
     COST = {
         CreationPoint: 1
     }
+    SKILL = None
+    REFERENCE = 'advapt{}'
 
-class AptitudeInAcrobatics(Aptitude):
-    REFERENCE = 'acroapt'
+    def get_ref(self):
+        return self.__class__.__name__+self.SKILL
+
+    def __init__(self, *args, skill=None, **kwargs):
+        if skill is None:
+            raise NotEnoughData(f'skill')
+        self.SKILL = skill
+        self.REFERENCE = self.REFERENCE.format(skill)
+        super().__init__(*args, **kwargs)
 
     def add_bonuses(self):
+        def costred(attr):
+            return min(attr.DEFAULT_BASE_RESOURCE_COST-self.invest[CreationPoint].value, 1)
+        skill = self.character.secondary.get_skill(self.SKILL)
+        self.old = skill.get_base_resource_cost
+        skill.get_base_resource_cost = MethodType(costred, skill)
+
+    def rem_bonuses(self):
+        self.character.secondary.get_skill(self.SKILL).get_base_resource_cost = self.old
+
+class NaturalPsychicPower(Advantage):  # fixme
+    COST = {
+        CreationPoint: 1
+    }
+    REFERENCE = 'advNPS{}'
+    NOTE = 'Character can cast {} naturally'
+    POWER = None
+
+    def __init__(self, *args, power=None, **kwargs):
+        if power is None:
+            raise NotEnoughData(f'power')
+        # todo: get power by name
+        # todo: add custom activatable
+        self.REFERENCE = self.REFERENCE.format(power)
+        self.NOTE = self.NOTE.format(power)
+        super().__init__(*args, **kwargs)
+
+
+class MartialMastery(Advantage):
+    COST = {
+        CreationPoint: 1
+    }
+    REFERENCE = 'advmarmat'
+
+    def get_bonus(self):
+        def bonus(attr):
+            return self.invest[CreationPoint].value*40
+
+        return self.__class__, bonus
+
+    def add_bonuses(self):
+        self.character.combat.maximum_martial_knowledge.add_bonus(*self.get_bonus())
+
+    def rem_bonuses(self):
         pass
+

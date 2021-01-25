@@ -37,7 +37,7 @@ class Attribute(Base):
 
     def get_base_resource_cap(self):  # overridable to be a function
         return self.DEFAULT_BASE_RESOURCE_CAP  # this expects to have a base resource
-
+    #
     def get_base_resource_cost(self):
         return self.DEFAULT_BASE_RESOURCE_COST
 
