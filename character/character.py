@@ -83,3 +83,13 @@ class Character:
 
     def get_limit(self):
         return self.base_limit
+
+    base_fumble_threshold = 3
+
+    def get_fumble_threshold(self):
+        return self.base_fumble_threshold
+
+    base_open_roll_threshold = 90
+
+    def get_open_roll_threshold(self):
+        return self.base_open_roll_threshold

@@ -181,3 +181,15 @@ class MartialMastery(Advantage):
     def rem_bonuses(self):
         pass
 
+class GoodLuck(Advantage):
+    COST = {
+        CreationPoint: 1
+    }
+    REFERENCE = 'advgoodluck'
+    NOTE = 'Character is extremely lucky'
+
+    def add_bonuses(self):
+        pass
+
+    def rem_bonuses(self):
+        pass
