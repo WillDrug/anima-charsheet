@@ -189,7 +189,7 @@ class GoodLuck(Advantage):
     NOTE = 'Character is extremely lucky'
 
     def add_bonuses(self):
-        pass
+        self.character.base_fumble_threshold -= 1
 
     def rem_bonuses(self):
-        pass
+        self.character.base_fumble_threshold += 1
