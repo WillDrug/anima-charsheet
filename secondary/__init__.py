@@ -26,7 +26,12 @@ class Skill(Ability):
     def get_name(cls):
         return cls.__name__ if not hasattr(cls, 'repname') else cls.repname
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, get_append_trained=None, get_append_untrained=None, **kwargs):
+        def get_append():
+            if get_append_trained is None or get_append_untrained is None:
+                return 0
+            return get_append_untrained() if self.boosts.__len__() == 0 else get_append_trained()
+        self.get_append = get_append
         super().__init__(*args, **kwargs)
         self.resource_f[InnateBonus] = self.parse_innate
 
@@ -37,11 +42,9 @@ class Skill(Ability):
     def impl_list(cls) -> dict:
         return {subcl.get_name(): subcl for subcl in cls.__subclasses__()}
 
+
     def base_value(self):
-        append = 0
-        if self.boosts.__len__() == 0:
-            append = -30
-        return append + super().base_value()
+        return self.get_append() + super().base_value()
 
 
 class Acrobatics(Skill):
@@ -97,7 +100,7 @@ class WithstandPain(Skill):
 
 class Poisons(Skill):
     STAT = 'INT'
-    MENTAL = True # fixme physical?
+    MENTAL = True  # fixme physical?
 
 class SleightOfHand(Skill):
     repname = 'Sleight of Hand'
@@ -141,6 +144,15 @@ class DominionConcealment(Skill):
 
 
 class Secondary(Module):
+    APPEND_TRAINED = 0
+    APPEND_UNTRAINED = -30
+
+    def get_append_trained(self):
+        return self.APPEND_TRAINED
+
+    def get_append_untrained(self):
+        return self.APPEND_UNTRAINED
+
     def get_value_cap(self, skillname):
         def value_cap_calc():
             return 40+floor(self.config.get_dp()/5)+(0 if skillname not in self.config.skill_per_level else 40)
@@ -157,7 +169,9 @@ class Secondary(Module):
             self.skills[k] = Skill.impl_list()[k](presence_f=self.config.get_presence,
                                                   stat_dict=self.config.character.general.stats,
                                                   base_res_cost=self.config.skill_costs.get(k),
-                                                  value_cap_f=self.get_value_cap(k))
+                                                  value_cap_f=self.get_value_cap(k),
+                                                  get_append_trained=self.get_append_trained,
+                                                  get_append_untrained=self.get_append_untrained)
 
             if k in self.config.skill_per_level:
                 self.skills[k].add_bonus(self, lambda x: self.config.get_level()*self.config.skill_per_level[x.__class__.get_name()])
@@ -166,7 +180,9 @@ class Secondary(Module):
 
     def add_skill(self, skill: str, stat: str, mental: bool):
         attr = Skill(presence_f=self.config.get_presence,
-                     stat_dict=self.config.character.general.stats)
+                     stat_dict=self.config.character.general.stats,
+                     get_append_trained=self.get_append_trained,
+                     get_append_untrained=self.get_append_untrained)
         attr.STAT = stat
         attr.DEFAULT_BASE_RESOURCE_COST = 1
         attr.BASE_RESOURCE = TertiaryPoint

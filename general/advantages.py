@@ -4,6 +4,7 @@ from types import MethodType
 from util.exceptions import NotEnoughData
 
 class Advantage(Buyable):
+    # todo: get_name and repname
     def get_ref(self):
         return self.__class__.__name__
 
@@ -193,3 +194,29 @@ class GoodLuck(Advantage):
 
     def rem_bonuses(self):
         self.character.base_fumble_threshold += 1
+
+class DominionRegen(Advantage):
+    COST = {
+        CreationPoint: 1
+    }
+    REFERENCE = 'advdomregen'
+
+    def add_bonuses(self):
+        raise NotImplementedError()
+
+    def rem_bonuses(self):
+        pass
+
+class JackOfAllTrades(Advantage):
+    COST = {
+        CreationPoint: 2
+    }
+    REFERENCE = 'advjackofalltrades'
+
+    def add_bonuses(self):  # fixme overriding values is a no-no here.
+        self.character.secondary.APPEND_UNTRAINED = 20
+        self.character.secondary.APPEND_TRAINED = 20
+
+    def rem_bonuses(self):
+        self.character.secondary.APPEND_TRAINED = 0
+        self.character.secondary.APPEND_UNTRAINED = -30
