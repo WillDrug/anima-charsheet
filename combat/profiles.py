@@ -1,6 +1,7 @@
 from math import floor
 
 from . import Light, Heavy, Ranged
+from .damage import *
 
 class CombatProfile:
     INITIATIVE = 0
@@ -16,6 +17,8 @@ class CombatProfile:
     SIZE = 1
 
     PENALTY = 60
+
+    ALLOWED_TYPES = []
 
     def __init__(self, stat_dict: dict):
         self.stat_dict = stat_dict
@@ -57,6 +60,7 @@ class Unarmed(CombatProfile):
     FORTITUDE = 10
     REACH = 1
     SIZE = 1  # fixme: not stated
+    ALLOWED_TYPES = [Impact]
 
     @property
     def armour_penetration(self):
@@ -70,6 +74,7 @@ class Longsword(CombatProfile):
     FORTITUDE = 13
     REACH = 2
     SIZE = 2
+    ALLOWED_TYPES = [Cut]
 
     @property
     def damage_bonus(self):

@@ -8,9 +8,9 @@ from combat import Light
 from util.tracked import Tracker
 from util.exceptions import NotCompatible, NotAllowed
 from secondary import Skill
+from combat.damage import *
+from random import random
 
-def roll_d100():
-    return 0
 
 class Controller:
     def __init__(self, character: Character):
@@ -34,6 +34,16 @@ class Controller:
         self.time.track(self.reset_actions, TimeUnit.ROUND)
         self.reset_actions()
 
+    def roll_d100(self, fumble=True, explode=True):
+        roll = round(random()*100)
+        sm = roll
+        if fumble and roll <= self.character.get_fumble_threshold():
+            return -round(random()*100)
+        while explode and roll >= self.character.get_open_roll_threshold():
+            roll = round(random())
+            sm += roll
+        return sm
+
     # time
     def tick(self, value: int = 1, unit: TimeUnit = TimeUnit.ROUND):
         self.time.tick(value, unit)
@@ -52,7 +62,6 @@ class Controller:
             self.__psy_action.use()
         self.__psy_action = None
 
-    # todo ROLLZ
     def start_combat_action(self, split=0):
         self.reset_actions()
         self.__combat_action = self.action_tracker.emit(1, CombatAction)
@@ -62,9 +71,10 @@ class Controller:
     def end_combat_action(self):
         self.__combat_action.use()
 
-    def attack_action(self, main_hand=True, attack_type: type = Light, special: CombatOption = None, roll=None):
+    def attack_action(self, main_hand=True, attack_type: type = Light, special: CombatOption = None,
+                      damage_type: DamageType = None, roll=None):
         if roll is None:
-            roll = roll_d100()
+            roll = self.roll_d100()
         if self.__combat_action is None:
             self.combat_action()
         penalty = 0
@@ -80,9 +90,16 @@ class Controller:
             penalty += profile.multiple_attack_penalty * self.__combat_action.split
         if special is not None:
             penalty += special.PENALTY
+        # damage type
+        if damage_type is None:
+            damage_type = profile.ALLOWED_TYPES  # exception, no damage type can be inferred, specify
+        elif profile.ALLOWED_TYPES.__len__() > 0:
+            if damage_type not in profile.ALLOWED_TYPES:
+                raise NotAllowed(f'{profile} can\'t use {damage_type} damage type')
+
         try:
             return min(getattr(self.character.combat.attack, attack_type.__name__.lower()).value - penalty + roll,
-                       self.character.get_limit()), special
+                       self.character.get_limit()), damage_type, special
         finally:
             if not main_hand:
                 if self.__combat_action.executed >= self.__combat_action.split:
@@ -101,7 +118,7 @@ class Controller:
         if self.__magic_action is None:
             raise NotAllowed('You need to initiate MAGICS first')
         if roll is None:
-            roll = roll_d100()
+            roll = self.roll_d100()
         return min(self.character.magic.magic_projection.value + roll, self.character.get_limit())
 
     def psionic_action(self):  # add PP tracker with 1 per hour recovery
@@ -111,7 +128,7 @@ class Controller:
     def cast_psy(self, roll=None):  # todo: takes psy ability to cast, checks PP and shit, may punch your fatigue.
         pass
 
-    def skill_action(self, skill: type, roll=None):  # todo skill conditioning
+    def skill_action(self, skill: type, roll=None):  # todo skill conditioning todo roll
         self.reset_actions()
         if not issubclass(skill, Skill):
             raise NotCompatible(f'{skill} is not a skill')
@@ -125,7 +142,10 @@ class Controller:
     def generic_action(self, activatable):  # todo: switches any generic activatable on-off
         pass      # todo: activatable should declare if it takes an ACTION to use and what resources it needs.
 
-    def defend(self):
+    def defend(self, final_attack: int, damage_type: DamageType, roll=None):
+        if roll is None:
+            roll = self.roll_d100()
+        # calculate full defense, keep roll separate, include limit
         pass  # fixme implement
 
     def move(self):
