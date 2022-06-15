@@ -1,24 +1,29 @@
-# Automatic Charsheet
-This is supposed to be a backend for an automatic anima tool.
-Creates a character sheet by homebrew rules.
+# Anima calculator and runner
+The main idea is to allow an easy and fast creation of a character sheet
+based on Anima Beyond Fantasy rework of mine.
+This repo should contain
+* Character sheet calculator: Extendable, reworkable.
+* Character instance worker, allowing statuses and data
+* Quick combat calculator
+* Saving states
+* Potentially a web interface
 
-# TODO
-* Make controller actions return and accept *Action classes
-  * Like `defend(atk: AttackAction) -> DefendAction`
-  * Create unconnected combat controller `combat(atk: AttackAction, def: DefendAction) -> Damage`
-  * Create `damage(dmg: Damage)` doing damage to character
-* Make no controller action automatic (to be: frontend job)
-* Martial Arts
-* Weapon Profiles
-* Ars Magnus
-* Advantages
-* 
+# Status
+* Made a base structure (Creature -> Monster\Character -> Controller -> Checker)
+* Coded in stats and resistances
 
-# Done
-* Buyables
-* Combat Base
-* General Base
-* Mystic Base
-* Psychic Base
-* Secondary Base
-* Tertiary
+# To-Do
+1) Character generation
+2) Character saving-loading
+3) Character tracking
+4) Character instance saving-loading
+5) Combat calculator
+6) Stage setter, allowing all-to-all tracking
+
+# Nomenclature
+* Entity: Base attribute of an object, referencable
+* Attribute: Base score of an entity
+* Ability: Rollable and raisable score
+* Power: Usable thing
+* Actor: Living entity
+* Object: Non-living entity
