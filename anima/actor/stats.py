@@ -2,38 +2,40 @@ from anima.util.parameters import AttributeContainer, CoreValueAttribute
 
 
 class Stats(AttributeContainer):
+    STARTING_VALUE = 0
+
     def common_initialize(self, value, *args, **kwargs):
-        self._value = value
-        self._value_f = lambda self: self._value
+        self._core_value = value if value else self.STARTING_VALUE
+        self._value_f = lambda iself: iself.core_value
 
 
 class STR(CoreValueAttribute, Stats):
-    pass
+    STARTING_VALUE = 0
 
 
 class DEX(CoreValueAttribute, Stats):
-    pass
+    STARTING_VALUE = 0
 
 
 class AGI(CoreValueAttribute, Stats):
-    pass
+    STARTING_VALUE = 0
 
 
 class CON(CoreValueAttribute, Stats):
-    pass
+    STARTING_VALUE = 0
 
 
 class INT(CoreValueAttribute, Stats):
-    pass
+    STARTING_VALUE = 0
 
 
 class POW(CoreValueAttribute, Stats):
-    pass
+    STARTING_VALUE = 0
 
 
 class WIL(CoreValueAttribute, Stats):
-    pass
+    STARTING_VALUE = 0
 
 
 class PER(CoreValueAttribute, Stats):
-    pass
+    STARTING_VALUE = 0
