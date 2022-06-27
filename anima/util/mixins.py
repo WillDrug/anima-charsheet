@@ -1,6 +1,6 @@
 from anima.util.exceptions import AttributeMissingError
 from anima.util.bonuses import Bonus
-from weakref import proxy
+
 
 class Referencable:
     I_NAME = None
@@ -17,6 +17,8 @@ class Referencable:
 
     def __hash__(self):
         return hash(self.iam)
+
+
 
 class Searchable:
     def access(self, attr):
@@ -44,16 +46,18 @@ class Searchable:
 
 
 class DispatchesBonuses:
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.bonuses = dict()
+        super(DispatchesBonuses, self).__init__(*args, **kwargs)
 
-    def dispatch_bonus(self, to, value, code=None):
+    def dispatch_bonus(self, to, value, code=None, value_f=None):
+        print(f'{self.iam} setting a bonus to {to}')
         if code is None and not hasattr(self, 'iam'):
             code = self.__class__.__name__.lower()
         elif code is None:
             code = self.iam
 
-        b = Bonus(code, value)
+        b = Bonus(code, value, value_f=value_f)
         self.bonuses[to] = b  # if there was previous bonus, it will be deleted on the next step anyway
         to.add_bonus(b)
 

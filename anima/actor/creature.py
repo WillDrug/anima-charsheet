@@ -2,8 +2,8 @@ from anima.actor.attributes import Gnosis, Presence, Resistances, Size, Initiati
     Willpower
 from anima.actor.stats import Stats
 from anima.util.mixins import Searchable, Referencable
-from anima.actor.abilities import Attack, Defense, MagicProjection, PsychicProjection
-
+from anima.actor.abilities import Attack, Defense, MagicProjection, PsychicProjection, Summon, Bind, Banish, Control
+from anima.actor.combat import CombatProfile
 
 class Creature(Searchable):
     # noinspection PyTypeChecker
@@ -24,14 +24,27 @@ class Creature(Searchable):
         self.willpower = Willpower(self)
 
         # Ability block
-        self.attack = Attack(self, kwargs.pop(Attack.iam, None))
-        self.defense = Defense(self, kwargs.pop(Defense.iam, None))
-        self.magicprojection = MagicProjection(self, kwargs.pop(MagicProjection.iam, None))
-        self.psychicprojection = PsychicProjection(self, kwargs.pop(PsychicProjection.iam, None))
+        self.attack = Attack(self, **kwargs)
+        self.defense = Defense(self, **kwargs)
+        self.magicprojection = MagicProjection(self, **kwargs)
+        self.summon = Summon(self, **kwargs)
+        self.banish = Banish(self, **kwargs)
+        self.bind = Bind(self, **kwargs)
+        self.control = Control(self, **kwargs)
+        self.psychicprojection = PsychicProjection(self, **kwargs)
 
-        # benefits and abilities
+        # profiles
+        """
+        In this section all possible attack and defense profiles are created. Controller is responsible for choosing 
+        active ones and calculating initiative. For Character, Armour will extend DefenseProfile
+        """
+        self.combatprofile = CombatProfile(self)
+
+
+        # benefits and powers
         self.benefits = set()
         self.activatable = set()
+
 
     def __str__(self):
         return f"<{self.__class__.__name__} ({self.name})>"
@@ -55,6 +68,7 @@ class Creature(Searchable):
         self.activatable.remove(cls)
 
 
+
 if __name__ == '__main__':
     c = Creature('my creature', presence=2, con=1, str=2, attack=10, defense=5, dex=2, wil=5)
-    print(c.stats.wil)
+    print(c.attack.value)

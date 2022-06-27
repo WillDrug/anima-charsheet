@@ -20,3 +20,5 @@ class PrerequisiteMissingError(Exception):
     def __str__(self):
         return f'<{self.__class__.__name__}: entity {self.source} does not satisfy {self.attr} prerequisite ({self.message})>'
 
+class ClassMistmatch(Exception):
+    pass

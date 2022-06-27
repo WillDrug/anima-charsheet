@@ -6,19 +6,23 @@ from anima.util.exceptions import PrerequisiteMissingError
 
 class Effect:
     """
-    Constitutes both effect and status
+    Constitutes both effect and status. fixme: should extend benefit as it is one, but smol
     """
-    pass
+    def __init__(self, source, *args, **kwargs):
+        self.source = source
+        self.initialize(*args, **kwargs)
+
+    def initialize(self, *args, **kwargs):
+        """
+        Function to override to make benefit do shit
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        pass
 
 
-class Activatable:
-    """
-    Anything which can be used by the character
-    """
-    pass
-
-
-class Benefit(Referencable, DispatchesBonuses):
+class Benefit(DispatchesBonuses, Effect, Referencable):
     """
     Advantage, GM grants, race plugins, etc.
     Has prerequisites, limitations, stuff.
@@ -34,8 +38,8 @@ class Benefit(Referencable, DispatchesBonuses):
         :param args:
         :param kwargs:
         """
-        super().__init__()
-        self.source = source
+
+        self.source = source  # source is duplicated as to check rpereqs
         self.pattern = re.compile(r'((?:\w+\.)+)(\w+)\s{0,}([><!=]+)\s{0,}(\d+)')
         self.comparators = {
             '>': '__gt__',
@@ -46,8 +50,8 @@ class Benefit(Referencable, DispatchesBonuses):
             '==': '__eq__',
             '!=': '__ne__'
         }
-        self.initialize(*args, **kwargs)
         self.check_prerequisites()
+        super().__init__(source, *args, **kwargs)
 
     def check_prerequisites(self):
         for benefit in self.REQUIRED_BENEFIT:
@@ -63,12 +67,20 @@ class Benefit(Referencable, DispatchesBonuses):
                 raise PrerequisiteMissingError(self.source, path,
                                                message=f'{path} should be {comparator} {value}, actually {test}')
 
-    def initialize(self, *args, **kwargs):
-        """
-        Function to override to make benefit do shit
-        :param args:
-        :param kwargs:
-        :return:
-        """
+
+
+class Activatable:
+    """
+    Anything which can be used by the character
+    """
+    def __init__(self, source):
+        self.source = source
+
+    def activate(self, *args, **kwargs):
         pass
 
+    def deactivate(self, *args, **kwargs):
+        pass
+
+    def __del__(self):
+        self.deactivate()

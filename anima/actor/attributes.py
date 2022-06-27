@@ -62,6 +62,20 @@ class Size(Attribute):
         else:
             return -4
 
+    def movement_bonus(self):
+        if self.value < -7:
+            return -4
+        elif self.value < -2:
+            return -2
+        elif self.value > 15:
+            return 1
+        elif self.value > 19:
+            return 2
+        elif self.value > 24:
+            return 3
+        else:
+            return 0
+
 
 class Initiative(Attribute):
     def _value_f(self):
@@ -72,7 +86,7 @@ class Initiative(Attribute):
 
 class Movement(Attribute):
     def _value_f(self):
-        return self.source.access('stats.ago').value
+        return self.source.access('stats.ago').value+self.source.access('size').movement_bonus()
 
     def meters(self):
         speed = {

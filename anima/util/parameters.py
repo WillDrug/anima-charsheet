@@ -1,27 +1,20 @@
 from anima.util.mixins import Referencable, Searchable
 from types import MethodType
 from typing import Iterable
-from anima.util.bonuses import Bonus
+from anima.util.bonuses import Bonus, Bonusable
 
 
-class Attribute(Referencable):
+class Attribute(Bonusable, Referencable):
     _value_f = lambda: 0
 
     def __init__(self, source, *args, **kwargs):
         """
         :rtype: object
         """
+        super().__init__(*args, **kwargs)
         self.source = source
         self.bonuses = set()
         self.initialize(*args, **kwargs)
-
-    def add_bonus(self, bonus: Bonus):
-        if bonus in self.bonuses:
-            self.bonuses.remove(bonus)  # this preserves the hash of a bonus object but allows to overwrite the value
-        self.bonuses.add(bonus)
-
-    def rem_bonus(self, bonus):
-        self.bonuses.remove(bonus)
 
     def initialize(self, *args, **kwargs):
         pass
@@ -41,8 +34,15 @@ class Attribute(Referencable):
 class CoreValueAttribute(Attribute):
     STARTING_VALUE = None
 
-    def initialize(self, value, **kwargs):
-        self._core_value = value if value is not None else self.STARTING_VALUE
+    def __init__(self, source, *args, **kwargs):
+        # self._core_value = None  # this is a type hint, this line will override other values via super()
+        super().__init__(source, *args, **kwargs)
+
+    def initialize(self, *args, **kwargs):
+        if self.iam in kwargs:
+            self._core_value = kwargs.pop(self.iam)
+        else:
+            self._core_value = self.STARTING_VALUE if self.STARTING_VALUE else 0
         self._value_f = lambda: self.core_value
 
     @property
@@ -58,12 +58,12 @@ class AttributeContainer(Referencable, Searchable):
     def attr_list(cls):
         return cls.__subclasses__()
 
-    def __init__(self, source, **kwargs):
+    def __init__(self, source, *args, **kwargs):
         self.source = source
         for cls in self.attr_list():
             cls.initialize = MethodType(self.common_initialize.__func__, cls)
             # noinspection PyTypeChecker
-            self.__setattr__(cls.iam, cls(self, kwargs.pop(cls.iam, None)))
+            self.__setattr__(cls.iam, cls(self, **kwargs))
 
     def common_initialize(self, *args, **kwargs):
         """
@@ -81,10 +81,13 @@ class AttributeContainer(Referencable, Searchable):
     def __str__(self):
         return f"{self.source}: {self.iam} (container)"
 
+    def foreach(self):
+        for cls in self.attr_list():
+            yield getattr(self, cls.iam)
 
 class Ability(CoreValueAttribute, AttributeContainer):
-    def __init__(self, source, value, *args, **kwargs):
-        super(Ability, self).__init__(source, value, *args, **kwargs)
+    def __init__(self, source, *args, **kwargs):
+        super(Ability, self).__init__(source, *args, **kwargs)
         AttributeContainer.__init__(self, source, *args, **kwargs)
 
     @property

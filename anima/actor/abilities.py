@@ -51,3 +51,16 @@ class OffensivePsychicProjection(Ability):
 
 class DefensivePsychicProjection(Ability):
     STAT = 'per'
+
+
+class Summon(Ability):
+    STAT = 'pow'
+
+class Bind(Ability):
+    STAT = 'pow'
+
+class Banish(Ability):
+    STAT = 'pow'
+
+class Control(Ability):
+    STAT = 'wil'
