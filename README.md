@@ -8,9 +8,16 @@ This repo should contain
 * Saving states
 * Potentially a web interface
 
+# Attention!
+This does not work for the base Anima Beyond Fantasy ruleset. This uses custom rules based on the system. 
+
+Changes include resistance recalculation, dynamic difficulty classes and general division of all numbers by 5.
+If you would like to make this work for general Anima you are welcome to contribute and fork, as the code is OOP enough to make it work.
+
 # Status
 * Made a base structure (Creature -> Monster\Character -> Controller -> Checker)
 * Coded in stats and resistances
+* Coded in powers, abilities and advantages for the base framework of a PC
 
 # To-Do
 1) Character generation
