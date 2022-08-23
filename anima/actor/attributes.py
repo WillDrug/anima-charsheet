@@ -1,5 +1,6 @@
 from anima.util.parameters import CoreValueAttribute, AttributeContainer, Attribute
 from math import floor
+from enum import Enum, auto
 
 
 class Gnosis(CoreValueAttribute):
@@ -39,12 +40,40 @@ class CriticalResistance(Attribute, Resistances):
     STAT = 'con'
     MULTIPLIER = 1
 
+class SizeType(Enum):
+    miniscule = auto()
+    small = auto()
+    medium = auto()
+    big = auto()
+    enormous = auto()
+    giant = auto()
+    colossal = auto()
+
+    @classmethod
+    def get_size(cls, size):
+        if size < -7:
+            return cls.miniscule
+        elif size < -2:
+            return cls.small
+        elif size < 12:
+            return cls.medium
+        elif size < 14:
+            return cls.big
+        elif size < 18:
+            return cls.enormous
+        elif size < 23:
+            return cls.giant
+        else:
+            return cls.colossal
 
 class Size(Attribute):
     def _value_f(self):
         # size is a basic attribute and cannot change for random bonuses to STR or CON.
         # therefore, if something would to increase STR or CON *and* size, it should add a specialty bonus here.
         return self.source.access('stats.str').clean_value + self.source.access('stats.con').clean_value
+
+    def get_size_type(self):
+        return SizeType.get_size(self.value)
 
     def base_initiative(self):
         if self.value < -7:
@@ -111,6 +140,7 @@ class LifePoints(Attribute):
     def _value_f(self):  # fixme see if this should be core_value
         return 14 + self.source.access('stats.con').value * 2 + \
                self.source.access('stats.str').value
+
 
 
 class Fatigue(Attribute):

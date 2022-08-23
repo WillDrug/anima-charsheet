@@ -74,7 +74,9 @@ class AttributeContainer(Referencable, Searchable):
         """
         pass
 
-    def max_of(self, refs: Iterable):
+    def max_of(self, refs: Iterable = None):
+        if refs is None:
+            refs = [q.iam for q in self.__class__.__subclasses__()]
         vals = [self.access(q).value for q in refs]
         return max(vals)
 
@@ -85,10 +87,15 @@ class AttributeContainer(Referencable, Searchable):
         for cls in self.attr_list():
             yield getattr(self, cls.iam)
 
+
 class Ability(CoreValueAttribute, AttributeContainer):
     def __init__(self, source, *args, **kwargs):
         super(Ability, self).__init__(source, *args, **kwargs)
         AttributeContainer.__init__(self, source, *args, **kwargs)
+        # after common initialize of a container is set and values work, replace self value with max_of
+
+    def is_container(self):
+        return self.__class__.__subclasses__().__len__() > 0
 
     @property
     def core_value(self):
@@ -111,6 +118,18 @@ class Ability(CoreValueAttribute, AttributeContainer):
                    iself.source.access('source').access('stats').access(iself.STAT).value
 
         self._value_f = val
+
+    @property
+    def value(self):
+        # WARNING: this makes the value property obscure as it can return a maximum of absolutely unrelated abilities
+        # use max_of of a container wherever possible.
+        if self.is_container():  # if there are sub-abilities
+            return max([self.access(q.iam).value for q in self.__class__.__subclasses__()])
+        bonuses = sum(self.bonuses)
+        if issubclass(self.source.__class__, AttributeContainer):  # this defends from going over to character
+            bonuses += sum(self.source.bonuses)
+
+        return self._value_f() + bonuses
 
 
 if __name__ == '__main__':

@@ -2,7 +2,7 @@ from anima.util.damage import Location, DamageType
 from anima.util.exceptions import ClassMistmatch
 from anima.util.mixins import Referencable, Searchable
 from anima.util.bonuses import Bonus, Bonusable
-from random import randint
+
 
 class ProtectionBonus(Bonus):
     def __init__(self, code, value, locations=Location.armour_locations(), damage_types=DamageType.all()):
@@ -34,41 +34,21 @@ class CombatProfile(Referencable, Searchable):
     def __init__(self, source):
         self.source = source
         self.protection = Protection()
+        self.weapons = set()
 
-    def defense_roll(self, defense_number, defense_type=None, roll=None):
-        """
-        This is implemented to be overridden by a cap function for PC
-        :param defense_number: affects penalty
-        :param defense_type: affects value
-        :param roll: dice roll
-        :return: int
-        """
-        if defense_number in self.penalties:
-            penalty = self.penalties[defense_number]
-        else:
-            penalty = self.penalties[5]  # todo: pretty up if affected by advantages or styles much
+    def add_weapon(self, weapon: "Weapon"):
+        if weapon in self.weapons:
+            self.weapons.remove(weapon)
+        self.weapons.add(weapon)
 
-        if roll is None:
-            roll = randint(1, 20)
+    def rem_weapon(self, weapon):
+        self.weapons.remove(weapon)
 
-        if defense_type is not None:
-            ability = self.source.access(f'defense.{defense_type}')
-        else:
-            ability = self.source.access('defense').max_of()
+    def get_weapon(self, weapon: str):
+        return next((q for q in self.weapons if q == weapon))
 
-        return roll + ability + penalty
-
-    def defense(self, defense_number: int, damage_type: DamageType, defense_type=None, roll: int = None,
-                location: Location = Location.body):
-        defense = self.defense_roll(defense_number, defense_type=defense_type, roll=roll)
-        protection = self.protection.get_protection(location, damage_type)  # armour is always over cap
-        
-        final_ability = defense + protection
-
-        # todo: implement extra functions for AoE and it's penalties, sizes, etc.
-
-        return final_ability
-
+    def attack(self, weapon, attack_types=(), damage_types=(), maneuvers=(), effects=()):
+        pass
 
 
 if __name__ == '__main__':

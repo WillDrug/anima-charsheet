@@ -2,27 +2,48 @@ import re
 
 from anima.util.mixins import Referencable, DispatchesBonuses
 from anima.util.exceptions import PrerequisiteMissingError
+from typing import Union, List
+
+""" Controller Specific Section 
+    Classes listed in this section apply and are used by CharacterController instead of Creature\Character
+    Controller should allow both Creature and Character to be used, considering the only difference is restrictions
+"""
 
 
-class Effect:
+class Choice:  # add referencable only if needed
     """
-    Constitutes both effect and status. fixme: should extend benefit as it is one, but smol
+    This is a per-round or per-action choice a character can make. This might be a shifting bonus of an MA,
+    Damage type replacement, or stuff like that
     """
-    def __init__(self, source, *args, **kwargs):
-        self.source = source
-        self.initialize(*args, **kwargs)
+    pass
 
-    def initialize(self, *args, **kwargs):
-        """
-        Function to override to make benefit do shit
-        :param args:
-        :param kwargs:
-        :return:
-        """
+
+class Activatable:
+    """
+    This is an action a character can take outside of the usual. Can dispatch Choice itself or temporarily enhance
+    something. Activating a Magnus would be an example: It would add a sink to a Ki Pool, proxy a stat to boost and
+    modify attacks until deactivated.
+    """
+    pass
+
+
+class Augment:
+    """
+    This is a general character benefit applicable to controller like special cases for Maneuvers.
+    Agument is Controller-based because a Maneuver is controller based and that augmentation can apply only to Unarmed
+    or to a specific weapon or weapon type.
+    """
+    TARGET = None
+
+    def __call__(self, f, *args, **kwargs):
         pass
 
 
-class Benefit(DispatchesBonuses, Effect, Referencable):
+
+""" Controller Specific Section End """
+
+
+class Benefit(DispatchesBonuses, Referencable):
     """
     Advantage, GM grants, race plugins, etc.
     Has prerequisites, limitations, stuff.
@@ -30,6 +51,7 @@ class Benefit(DispatchesBonuses, Effect, Referencable):
 
     REQUIRED_BENEFIT = ()
     REQUIRED_PARAM = ()
+    DESCRIPTION = None
 
     def __init__(self, source, *args, **kwargs):
         """
@@ -52,6 +74,11 @@ class Benefit(DispatchesBonuses, Effect, Referencable):
         }
         self.check_prerequisites()
         super().__init__(source, *args, **kwargs)
+        self.dispatched = []
+        self.initialize()
+
+    def description(self):
+        return self.DESCRIPTION
 
     def check_prerequisites(self):
         for benefit in self.REQUIRED_BENEFIT:
@@ -67,20 +94,17 @@ class Benefit(DispatchesBonuses, Effect, Referencable):
                 raise PrerequisiteMissingError(self.source, path,
                                                message=f'{path} should be {comparator} {value}, actually {test}')
 
-
-
-class Activatable:
-    """
-    Anything which can be used by the character
-    """
-    def __init__(self, source):
-        self.source = source
-
-    def activate(self, *args, **kwargs):
+    def initialize(self):
+        """
+        Function should be used to generate any Controller-specific bonuses a benefit gives
+        :return: None
+        """
         pass
 
-    def deactivate(self, *args, **kwargs):
-        pass
-
-    def __del__(self):
-        self.deactivate()
+    def __call__(self, *args, **kwargs) -> List[Union[Activatable, Augment, Choice]]:
+        """
+        :param args: unused
+        :param kwargs: unused
+        :return: Returns a list of Activatables, Choices and Augments for Controller to use.
+        """
+        return self.dispatched

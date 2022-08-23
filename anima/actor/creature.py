@@ -4,6 +4,7 @@ from anima.actor.stats import Stats
 from anima.util.mixins import Searchable, Referencable
 from anima.actor.abilities import Attack, Defense, MagicProjection, PsychicProjection, Summon, Bind, Banish, Control
 from anima.actor.combat import CombatProfile
+from anima.actor.regenerations import Regeneration
 
 class Creature(Searchable):
     # noinspection PyTypeChecker
@@ -20,6 +21,7 @@ class Creature(Searchable):
         self.initiative = Initiative(self)
         self.movement = Movement(self)
         self.lifepoints = LifePoints(self)
+        self.regeneration = Regeneration(self)
         self.fatigue = Fatigue(self)
         self.willpower = Willpower(self)
 
@@ -43,29 +45,31 @@ class Creature(Searchable):
 
         # benefits and powers
         self.benefits = set()
-        self.activatable = set()
 
 
     def __str__(self):
         return f"<{self.__class__.__name__} ({self.name})>"
 
-    def add_benefit(self, cls, *args, **kwargs):
-        if cls.iam in self.benefits:
-            self.benefits.remove(cls.iam)
-        self.benefits.add(cls(self, *args, **kwargs))
+    def add_attr(self, container, cls, *args, **kwargs):
+        if not hasattr(self, container):
+            raise AttributeError(f'{self.iam} has no container {container}')
+        if cls.iam in getattr(self, container):
+            getattr(self, container).remove(cls.iam)
+        getattr(self, container).add(cls(self, *args, **kwargs))
 
-    def rem_benefit(self, cls):
+    def rem_attr(self, container, cls):
+        if not hasattr(self, container):
+            raise AttributeError(f'{self.iam} has no container {container}')
         if issubclass(cls, Referencable):
             cls = cls.iam
-        self.benefits.remove(cls)
+        getattr(self, container).remove(cls)
 
-    def add_activatable(self, cls, *args, **kwargs):
-        if cls.iam in self.activatable:
-            self.activatable.remove(cls.iam)
-        self.activatable.add(cls(self, *args, **kwargs))
+    def add_benefit(self, cls, *args, **kwargs):
+        return self.add_attr('benefits', cls, *args, **kwargs)
 
-    def rem_activatable(self, cls):
-        self.activatable.remove(cls)
+    def rem_benefit(self, cls):
+        return self.rem_attr('benefits', cls)
+
 
 
 

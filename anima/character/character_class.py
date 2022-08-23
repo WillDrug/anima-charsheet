@@ -3,6 +3,7 @@ from anima.util.mixins import DispatchesBonuses, Referencable
 from math import floor
 from anima.util.parameters import Attribute
 
+#fixme fill in skill_bonuses
 
 class SkillPoints(Attribute):
     def initialize(self, *args, **kwargs):

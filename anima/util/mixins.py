@@ -2,6 +2,8 @@ from anima.util.exceptions import AttributeMissingError
 from anima.util.bonuses import Bonus
 
 
+
+
 class Referencable:
     I_NAME = None
 
@@ -51,7 +53,6 @@ class DispatchesBonuses:
         super(DispatchesBonuses, self).__init__(*args, **kwargs)
 
     def dispatch_bonus(self, to, value, code=None, value_f=None):
-        print(f'{self.iam} setting a bonus to {to}')
         if code is None and not hasattr(self, 'iam'):
             code = self.__class__.__name__.lower()
         elif code is None:
@@ -64,3 +65,4 @@ class DispatchesBonuses:
     def __del__(self):
         for target in self.bonuses:
             target.rem_bonus(self.bonuses[target])
+

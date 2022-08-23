@@ -16,10 +16,13 @@ from anima.character.skills import Skills
 from math import floor
 from anima.character.character_class import CharacterClass
 from anima.character.attributes import DP, MK, Zeon, PsychicPoints, PsychicPotential
+from anima.equipment.weapon import Unarmed
+
 
 class Character(Creature):
     def __init__(self, name, character_class, race, starting_dp, description='', *args, **kwargs):
         super().__init__(name, description=description, *args, **kwargs)
+        self.combatprofile.add_weapon(Unarmed(self))
         self.dp = DP(self, dp=starting_dp)
         self.mk = MK(self)
         # regenerate presence
@@ -40,8 +43,7 @@ class Character(Creature):
 
 
 
-from anima.character.advantage import JackOfAllTrades
-
 if __name__ == '__main__':
+    from anima.util.bonuses import Bonus
     c = Character('test', 'acrobaticwarrior', '', starting_dp=20, con=1, presence=2, str=1, dex=4, attack=5, acrobatics=1, withstandpain=10)
-    print(c.skills.acrobatics)
+    print(c.combatprofile.weapons)
