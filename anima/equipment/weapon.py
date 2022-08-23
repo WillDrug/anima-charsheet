@@ -133,6 +133,8 @@ class RangedWeapon(Weapon):
 class Unarmed(Weapon):
     SPEED = 0
     BASE_DAMAGE = None
+    PRIMARY_TYPES = [DamageType.impact]
+    ALLOWED_ABILITY = ['light', 'heavy']
 
     def get_speed(self):
         base_speed = {

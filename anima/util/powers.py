@@ -4,44 +4,6 @@ from anima.util.mixins import Referencable, DispatchesBonuses
 from anima.util.exceptions import PrerequisiteMissingError
 from typing import Union, List
 
-""" Controller Specific Section 
-    Classes listed in this section apply and are used by CharacterController instead of Creature\Character
-    Controller should allow both Creature and Character to be used, considering the only difference is restrictions
-"""
-
-
-class Choice:  # add referencable only if needed
-    """
-    This is a per-round or per-action choice a character can make. This might be a shifting bonus of an MA,
-    Damage type replacement, or stuff like that
-    """
-    pass
-
-
-class Activatable:
-    """
-    This is an action a character can take outside of the usual. Can dispatch Choice itself or temporarily enhance
-    something. Activating a Magnus would be an example: It would add a sink to a Ki Pool, proxy a stat to boost and
-    modify attacks until deactivated.
-    """
-    pass
-
-
-class Augment:
-    """
-    This is a general character benefit applicable to controller like special cases for Maneuvers.
-    Agument is Controller-based because a Maneuver is controller based and that augmentation can apply only to Unarmed
-    or to a specific weapon or weapon type.
-    """
-    TARGET = None
-
-    def __call__(self, f, *args, **kwargs):
-        pass
-
-
-
-""" Controller Specific Section End """
-
 
 class Benefit(DispatchesBonuses, Referencable):
     """
@@ -101,7 +63,7 @@ class Benefit(DispatchesBonuses, Referencable):
         """
         pass
 
-    def __call__(self, *args, **kwargs) -> List[Union[Activatable, Augment, Choice]]:
+    def __call__(self, *args, **kwargs) -> List["Augment"]:
         """
         :param args: unused
         :param kwargs: unused

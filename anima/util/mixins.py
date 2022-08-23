@@ -50,7 +50,7 @@ class Searchable:
 class DispatchesBonuses:
     def __init__(self, *args, **kwargs):
         self.bonuses = dict()
-        super(DispatchesBonuses, self).__init__(*args, **kwargs)
+        #super(DispatchesBonuses, self).__init__(*args, **kwargs)
 
     def dispatch_bonus(self, to, value, code=None, value_f=None):
         if code is None and not hasattr(self, 'iam'):
