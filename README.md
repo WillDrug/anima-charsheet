@@ -18,6 +18,9 @@ If you would like to make this work for general Anima you are welcome to contrib
 * Made a base structure (Creature -> Monster\Character -> Controller -> Checker)
 * Coded in stats and resistances
 * Coded in powers, abilities and advantages for the base framework of a PC
+* Added Controller class which should work round-per-round for a character
+* Added first tracker (LifePoints)
+* Started work on augments (maneuvers, statuses, etc.)
 
 # To-Do
 1) Character generation
